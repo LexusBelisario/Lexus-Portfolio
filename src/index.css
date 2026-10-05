@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Federo", serif;
+  --font-sans: "Plus Jakarta Sans", sans-serif;
+  --color-strip: #a5c4d4;
+  --color-ink: #323d38;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+.hero-bg {
+  background:
+    radial-gradient(ellipse 45% 55% at 38% 8%, #e08a3e 0%, #d98540 30%, transparent 100%),
+    radial-gradient(ellipse 30% 35% at 12% 55%, #70907f 0%, transparent 100%),
+    radial-gradient(ellipse 30% 35% at 90% 55%, #70907f 0%, transparent 100%),
+    radial-gradient(ellipse 25% 20% at 85% 100%, #eddaf0 0%, transparent 100%),
+    var(--color-ink);
+}
