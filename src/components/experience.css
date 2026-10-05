@@ -1,0 +1,133 @@
+.exp {
+  --gold: #d4a12c;
+  --gold-soft: rgba(212, 161, 44, 0.55);
+  background: linear-gradient(
+    to bottom,
+    #7a3a1e 0%,
+    #5e2719 30%,
+    #3d1510 68%,
+    #2b0f0b 100%
+  );
+}
+
+.exp-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 55% 35% at 50% 58%, rgba(170, 70, 36, 0.22), transparent 72%),
+    radial-gradient(ellipse 80% 18% at 50% 100%, rgba(0, 0, 0, 0.45), transparent 80%);
+}
+
+.exp-gold {
+  color: var(--gold);
+}
+
+.exp-card {
+  background: linear-gradient(180deg, rgba(38, 13, 10, 0.82), rgba(24, 8, 6, 0.9));
+  border: 1px solid rgba(212, 161, 44, 0.28);
+  box-shadow:
+    0 1.2vw 3vw rgba(0, 0, 0, 0.35),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.exp-card:hover {
+  border-color: rgba(212, 161, 44, 0.55);
+}
+
+.exp-inner {
+  background: rgba(20, 6, 5, 0.78);
+  border: 1px solid var(--gold-soft);
+  transition:
+    border-color 0.4s ease,
+    box-shadow 0.4s ease;
+}
+
+.exp-card:hover .exp-inner {
+  border-color: var(--gold);
+  box-shadow: 0 0 1.6vw rgba(212, 161, 44, 0.22);
+}
+
+.exp-rule {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(212, 161, 44, 0.6),
+    transparent
+  );
+}
+
+.exp-live {
+  position: relative;
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+.exp-live::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--gold);
+  animation: exp-ping 1.8s ease-out infinite;
+}
+
+.reveal-wipe {
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 0.4s ease;
+}
+
+.about-in .reveal-wipe {
+  clip-path: inset(-3vw);
+  transition: clip-path 1.1s cubic-bezier(0.65, 0, 0.35, 1);
+  transition-delay: calc(var(--d, 0) * 1ms);
+}
+
+.sp-code {
+  display: block;
+  height: 100%;
+  aspect-ratio: 4 / 1;
+  background: var(--gold);
+  -webkit-mask: var(--sp-src) center / contain no-repeat;
+  mask: var(--sp-src) center / contain no-repeat;
+}
+
+.sp-link {
+  transition:
+    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.4s ease;
+}
+
+.sp-link:hover {
+  transform: scale(1.06);
+  filter: drop-shadow(0 0 0.7vw rgba(212, 161, 44, 0.5));
+}
+
+@keyframes exp-ping {
+  from {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(2.8);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-wipe {
+    clip-path: none;
+    transition: none;
+  }
+
+  .exp-live::after {
+    animation: none;
+  }
+
+  .sp-link {
+    transition: none;
+  }
+}

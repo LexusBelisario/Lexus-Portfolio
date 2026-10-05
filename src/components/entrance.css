@@ -1,0 +1,172 @@
+.enter-curtain {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  pointer-events: none;
+  animation: enter-curtain 2.2s ease-out 0.1s forwards;
+}
+
+.enter-strip {
+  animation: enter-strip 1s cubic-bezier(0.16, 1, 0.3, 1) 0.15s backwards;
+}
+
+.enter-strip > span {
+  animation: enter-fade 1s ease-out 0.9s backwards;
+}
+
+.enter-up {
+  animation: enter-up 0.9s cubic-bezier(0.16, 1, 0.3, 1) var(--at, 0s) backwards;
+}
+
+.enter-fade {
+  animation: enter-fade 1s ease-out var(--at, 0s) backwards;
+}
+
+.enter-right {
+  animation: enter-right 0.8s cubic-bezier(0.16, 1, 0.3, 1) calc(1s + var(--i, 0) * 0.12s) backwards;
+}
+
+.enter-slide-right {
+  animation: enter-slide-right 1.1s cubic-bezier(0.16, 1, 0.3, 1) 1.2s backwards;
+}
+
+.enter-rise {
+  animation: enter-rise 1.3s cubic-bezier(0.16, 1, 0.3, 1) 0.3s backwards;
+}
+
+.enter-char {
+  animation: enter-char 0.8s cubic-bezier(0.16, 1, 0.3, 1) calc(0.5s + var(--i, 0) * 0.045s) backwards;
+}
+
+.enter-walk {
+  animation:
+    enter-walk 2s cubic-bezier(0.22, 0.7, 0.3, 1) calc(0.6s + var(--i, 0) * 0.22s) backwards,
+    enter-sway 0.66s ease-in-out calc(0.6s + var(--i, 0) * 0.22s) 3 backwards;
+}
+
+.enter-nav {
+  animation: enter-nav 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.2s backwards;
+}
+
+.enter-link {
+  animation: enter-link 0.7s cubic-bezier(0.16, 1, 0.3, 1) calc(0.55s + var(--i, 0) * 0.08s) backwards;
+}
+
+@keyframes enter-curtain {
+  0% {
+    opacity: 1;
+    visibility: visible;
+  }
+  99% {
+    opacity: 0;
+    visibility: visible;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+@keyframes enter-strip {
+  from {
+    translate: -100% 0;
+  }
+}
+
+@keyframes enter-up {
+  from {
+    opacity: 0;
+    translate: 0 1.25rem;
+  }
+}
+
+@keyframes enter-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes enter-right {
+  from {
+    opacity: 0;
+    translate: 1.5rem 0;
+  }
+}
+
+@keyframes enter-slide-right {
+  from {
+    translate: 110% 0;
+  }
+}
+
+@keyframes enter-rise {
+  from {
+    opacity: 0;
+    translate: 0 8%;
+  }
+}
+
+@keyframes enter-char {
+  from {
+    opacity: 0;
+    translate: 0 0.55em;
+    filter: blur(6px);
+  }
+}
+
+@keyframes enter-walk {
+  0% {
+    opacity: 0;
+    translate: -110vw 0;
+  }
+  10% {
+    opacity: 1;
+  }
+}
+
+@keyframes enter-sway {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  25% {
+    rotate: 2.2deg;
+  }
+  75% {
+    rotate: -2.2deg;
+  }
+}
+
+@keyframes enter-nav {
+  from {
+    opacity: 0;
+    translate: 0 -100%;
+  }
+}
+
+@keyframes enter-link {
+  from {
+    opacity: 0;
+    translate: 0 -0.6rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enter-curtain {
+    display: none;
+  }
+
+  .enter-strip,
+  .enter-strip > span,
+  .enter-up,
+  .enter-fade,
+  .enter-right,
+  .enter-slide-right,
+  .enter-rise,
+  .enter-char,
+  .enter-walk,
+  .enter-nav,
+  .enter-link {
+    animation: none;
+  }
+}

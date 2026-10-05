@@ -2,13 +2,10 @@
 
 @theme {
   --font-display: "Federo", serif;
+  --font-kanye: "Compacta Blk BT", sans-serif;
   --font-sans: "Plus Jakarta Sans", sans-serif;
   --color-strip: #a5c4d4;
   --color-ink: #323d38;
-}
-
-html {
-  scroll-behavior: smooth;
 }
 
 body {
@@ -24,4 +21,184 @@ body {
     radial-gradient(ellipse 30% 35% at 90% 55%, #70907f 0%, transparent 100%),
     radial-gradient(ellipse 25% 20% at 85% 100%, #eddaf0 0%, transparent 100%),
     var(--color-ink);
+}
+
+.landing .leave-up {
+  transform: translate3d(0, calc(var(--leave, 0) * -9vh), 0);
+  opacity: calc(1 - var(--leave, 0) * 1.5);
+  will-change: transform, opacity;
+}
+
+.landing .leave-down {
+  transform: translate3d(0, calc(var(--leave, 0) * 14vh), 0)
+    scale(calc(1 + var(--leave, 0) * 0.06));
+  transform-origin: 50% 100%;
+  will-change: transform;
+}
+
+.landing .leave-fade {
+  opacity: calc(1 - var(--leave, 0) * 2);
+}
+
+.about {
+  background: linear-gradient(
+    to bottom,
+    #36062b 0%,
+    #5a0f4a 45%,
+    #671556 72%,
+    #7a3a1e 100%
+  );
+}
+
+.about::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 16vh;
+  background: linear-gradient(to bottom, var(--color-ink), transparent);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.about-glow {
+  position: absolute;
+  inset: -14vh 0;
+  background: radial-gradient(
+    ellipse 46% 40% at 62% 40%,
+    rgba(196, 52, 172, 0.95) 0%,
+    rgba(196, 52, 172, 0.45) 45%,
+    rgba(196, 52, 172, 0) 75%
+  );
+  transform: translate3d(0, calc((var(--pass, 0.5) - 0.5) * -10vh), 0);
+  will-change: transform;
+}
+
+.about-parallax {
+  transform: translate3d(0, calc((var(--pass, 0.5) - 0.5) * -7vh), 0);
+  will-change: transform;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 40px, 0);
+  transition:
+    opacity 0.45s ease,
+    transform 0.45s ease;
+}
+
+.about-in .reveal {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+  transition:
+    opacity 0.9s ease,
+    transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--d, 0) * 1ms);
+}
+
+.reveal-pop {
+  opacity: 0;
+  transform: scale(0.3) rotate(-24deg);
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
+}
+
+.about-in .reveal-pop {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+  transition:
+    opacity 0.5s ease,
+    transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition-delay: calc(var(--d, 0) * 1ms);
+}
+
+.reveal-line {
+  transform: scaleX(0);
+  transform-origin: right center;
+  transition: transform 0.4s ease;
+}
+
+.about-in .reveal-line {
+  transform: scaleX(1);
+  transition: transform 1s cubic-bezier(0.65, 0, 0.35, 1);
+  transition-delay: calc(var(--d, 0) * 1ms);
+}
+
+.polaroid-tilt {
+  transform: rotate(2deg);
+  filter: drop-shadow(0 1.4vw 2vw rgba(20, 0, 24, 0.5));
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.polaroid-tilt:hover {
+  transform: rotate(0deg) translate3d(0, -0.5vw, 0) scale(1.015);
+}
+
+.polaroid {
+  opacity: 0;
+  transform: translate3d(9vw, 4vh, 0) rotate(8deg) scale(0.92);
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s ease;
+}
+
+.about-in .polaroid {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  transition:
+    opacity 1s ease 0.35s,
+    transform 1.3s cubic-bezier(0.22, 1, 0.36, 1) 0.35s;
+}
+
+.tape {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 238, 204, 0.82),
+    rgba(255, 224, 168, 0.64)
+  );
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    98% 25%,
+    100% 50%,
+    98% 75%,
+    100% 100%,
+    0 100%,
+    2% 75%,
+    0 50%,
+    2% 25%
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-pop,
+  .reveal-line {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .polaroid {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .polaroid-tilt {
+    transition: none;
+  }
+
+  .landing .leave-up,
+  .landing .leave-down,
+  .landing .leave-fade {
+    transform: none;
+    opacity: 1;
+  }
+
+  .about-glow,
+  .about-parallax {
+    transform: none;
+  }
 }
