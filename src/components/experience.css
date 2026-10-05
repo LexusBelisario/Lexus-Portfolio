@@ -23,6 +23,10 @@
   color: var(--gold);
 }
 
+.exp-label {
+  font-family: "Libre Caslon Text", "Times New Roman", Times, serif;
+}
+
 .exp-card {
   background: linear-gradient(180deg, rgba(38, 13, 10, 0.82), rgba(24, 8, 6, 0.9));
   border: 1px solid rgba(212, 161, 44, 0.28);

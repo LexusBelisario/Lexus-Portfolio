@@ -15,7 +15,7 @@ export const games = [
 
 export const dream = {
   label: 'What I really want to be',
-  role: 'Your dream role',
+  role: 'A Lawyer',
   story: 'Tell the story behind it here. What got you interested, what draws you to it, and what you are doing to get there.',
 }
 

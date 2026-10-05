@@ -124,7 +124,7 @@ function Card({ index, title, footer, children }) {
           style={delay(380 + index * 160)}
         >
           <h3
-            className="reveal exp-gold text-center font-display text-[clamp(1.35rem,1.8vw,2.1rem)] leading-tight"
+            className="reveal exp-gold exp-label text-center text-[clamp(1.25rem,1.35vw,1.65rem)] leading-tight"
             style={delay(700 + index * 160)}
           >
             {title}
@@ -159,7 +159,7 @@ export default function Experience() {
           <span className="text-[clamp(1rem,1.2vw,1.5rem)] font-medium">
             TRACK 02:
           </span>
-          <h2 className="font-display text-[clamp(1.35rem,1.7vw,2.2rem)] tracking-wide">
+          <h2 className="exp-label text-[clamp(1.45rem,1.85vw,2.4rem)] font-bold tracking-wide">
             EXPERIENCES &amp; SKILLS
           </h2>
         </div>
@@ -189,7 +189,7 @@ export default function Experience() {
           <Card index={2} title="Active Stack">
             <IconRow items={activeStack} baseDelay={1140} />
             <h3
-              className="reveal exp-gold mt-[clamp(0.25rem,0.8vw,1rem)] text-center font-display text-[clamp(1.35rem,1.8vw,2.1rem)] leading-tight"
+              className="reveal exp-gold exp-label mt-[clamp(0.25rem,0.8vw,1rem)] text-center text-[clamp(1.25rem,1.35vw,1.65rem)] leading-tight"
               style={delay(1500)}
             >
               Currently Exploring
