@@ -75,7 +75,7 @@ export default function AboutMe() {
 
             <div className="flex items-center gap-[clamp(0.75rem,1vw,1.4rem)]">
               <h2
-                className="reveal text-[clamp(1.3rem,1.5vw,2.2rem)] font-extrabold leading-none"
+                className="reveal font-kanye text-[clamp(1.3rem,1.5vw,2.2rem)] leading-none"
                 style={delay(120)}
               >
                 ABOUT ME

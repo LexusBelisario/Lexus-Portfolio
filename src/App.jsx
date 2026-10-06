@@ -2,6 +2,7 @@ import Navbar from './components/navbar'
 import LandingPage from './components/landing_page'
 import AboutMe from './components/about_me'
 import Experience from './components/experience'
+import Projects from './components/projects'
 import Secret from './components/secret'
 import { useSmoothAnchors } from './hooks/scroll'
 
@@ -18,6 +19,7 @@ export default function App() {
       <LandingPage />
       <AboutMe />
       <Experience />
+      <Projects />
     </>
   )
 }

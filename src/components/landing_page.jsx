@@ -55,6 +55,7 @@ const socials = [
 const band = [
   {
     name: 'George',
+    label: 'George',
     src: george,
     left: '12.8%',
     width: '22.4%',
@@ -64,6 +65,7 @@ const band = [
   },
   {
     name: 'Paul',
+    label: 'Paul - My Favorite Beatle',
     src: paul,
     left: '33.6%',
     width: '16.8%',
@@ -73,6 +75,7 @@ const band = [
   },
   {
     name: 'Ringo',
+    label: 'Ringoooo',
     src: ringo,
     left: '56.5%',
     width: '17.4%',
@@ -82,6 +85,7 @@ const band = [
   },
   {
     name: 'John',
+    label: 'John Lennon - my 2nd favorite',
     src: lennon,
     left: '77%',
     width: '16.5%',
@@ -257,32 +261,39 @@ export default function LandingPage() {
           />
 
           {band.map((member, index) => (
-            <img
+            <div
               key={member.name}
-              src={member.src}
-              alt={member.name}
-              onClick={
-                member.name === 'Paul'
-                  ? handlePaulClick
-                  : undefined
-              }
-              className={`
-                enter-walk
-                absolute h-auto origin-bottom
-                cursor-pointer
-                transition-all duration-300
-                hover:-translate-y-3
-                hover:rotate-2
-                ${member.hoverShadow}
-                motion-reduce:transition-none
-              `}
+              className="absolute"
               style={{
                 left: member.left,
                 width: member.width,
                 bottom: member.bottom,
-                '--i': band.length - 1 - index,
               }}
-            />
+            >
+              <img
+                src={member.src}
+                alt={member.name}
+                onClick={
+                  member.name === 'Paul'
+                    ? handlePaulClick
+                    : undefined
+                }
+                className={`
+                  enter-walk
+                  peer block h-auto w-full origin-bottom
+                  cursor-pointer
+                  transition-all duration-300
+                  hover:-translate-y-3
+                  hover:rotate-2
+                  ${member.hoverShadow}
+                  motion-reduce:transition-none
+                `}
+                style={{ '--i': band.length - 1 - index }}
+              />
+              <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/70 px-4 py-1.5 text-sm font-semibold text-white opacity-0 backdrop-blur-sm transition-all duration-300 peer-hover:-translate-y-3 peer-hover:opacity-100 motion-reduce:transition-none sm:text-base">
+                {member.label}
+              </span>
+            </div>
           ))}
         </div>
 
