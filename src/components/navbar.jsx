@@ -25,7 +25,7 @@ export default function Navbar() {
           : 'border-transparent bg-transparent shadow-none backdrop-blur-none'
       }`}
     >
-      <nav className="flex flex-wrap justify-end gap-x-6 gap-y-2 px-6 py-5 text-2xl font-medium text-white sm:px-12 lg:pr-24">
+      <nav className="flex flex-wrap justify-end gap-x-6 gap-y-2 px-6 py-5 text-xl font-medium text-white sm:px-12 lg:pr-24">
         {links.map((link, index) => (
           <a
             key={link.href}

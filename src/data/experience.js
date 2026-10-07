@@ -60,4 +60,5 @@ export const exploring = [
   { label: 'Java', src: findSvg('java') },
   { label: 'Docker', src: findSvg('docker') },
   { label: 'MongoDB', src: findSvg('mongo') },
+  { label: 'Figma', src: findSvg('figma') },
 ]

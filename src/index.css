@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Federo", serif;
+  --font-display: "Cosmic", serif;
   --font-kanye: "Compacta Blk BT", sans-serif;
   --font-sans: "Plus Jakarta Sans", sans-serif;
   --color-strip: #a5c4d4;

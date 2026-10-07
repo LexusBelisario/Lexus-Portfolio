@@ -7,7 +7,7 @@ import paul from '../assets/beatles/paul.svg'
 import ringo from '../assets/beatles/ringo.svg'
 import lennon from '../assets/beatles/lennon.svg'
 import zebraCrossing from '../assets/beatles/zebra_crossing.svg'
-import hereComesTheSun from '../assets/beatles/herecomesthesun.png'
+import hereComesTheSun from '../assets/beatles/herecomesthesun.svg'
 import { useScrollVars } from '../hooks/scroll'
 import './entrance.css'
 
@@ -245,11 +245,13 @@ export default function LandingPage() {
           href="https://open.spotify.com/track/6dGnYIeXmHdcikdzNNDMm2?si=e459eb722d5943e2"
           target="_blank"
           rel="noreferrer"
+          aria-label="Listen to Here Comes the Sun on Spotify"
+          className="leave-fade enter-slide-right absolute right-0 top-72 z-10 hidden h-75 w-15 sm:block"
         >
           <img
             src={hereComesTheSun}
             alt=""
-            className="leave-fade enter-slide-right absolute right-0 top-72 z-10 hidden h-75 w-15 object-contain sm:block"
+            className="absolute left-1/2 top-1/2 h-15 w-75 max-w-none -translate-x-1/2 -translate-y-1/2 -rotate-90 object-contain"
           />
         </a>
 
