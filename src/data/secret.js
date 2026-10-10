@@ -66,5 +66,6 @@ export const gunbarrelTracks = [
   { src: '/audio/gunbarrel_fyeo.mp3' },
   { src: '/audio/gunbarrel_frwl.mp3' },
   { src: '/audio/gunbarrel_tld.mp3' },
-  { src: '/audio/gunbarrel_tswlm.mp3' }
+  { src: '/audio/gunbarrel_tswlm.mp3' },
+  { src: '/audio/gunbarrel_yolt.mp3' },
 ]

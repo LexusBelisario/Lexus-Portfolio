@@ -21,8 +21,10 @@ const css = tech('CSS3', 'css')
 const java = tech('Java', 'java')
 const arduino = tech('Arduino', 'arduino')
 const c = tech('C', '/c.svg')
-const vb = tech('Visual Basic', 'visualbasic')
+const vb = { ...tech('Visual Basic', 'visualbasic'), chip: true }
 const database = tech('Database', 'database')
+const fastapi = tech('FastAPI', 'fastapi')
+const docker = tech('Docker', 'docker')
 
 export const groups = [
   {
@@ -95,7 +97,7 @@ export const groups = [
         id: 'blgf',
         title: 'BLGF Web App',
         period: 'August 11, 2025 - Present',
-        stack: [react, tailwind, postgres, python, css],
+        stack: [react, tailwind, postgres, python, fastapi, css],
         description:
           'A fullstack project at Integrated Geosys Development Inc. where I modernized the BLGF GIS Web Application. I took charge of the UI/UX redesign using React and Tailwind, built FastAPI endpoints and PostgreSQL schemas for role-based auth (Municipal vs. Provincial), and developed GIS features like parcel subdivision, consolidation, and a Spatial Data Manager for PostGIS datasets (.shp, .gpkg).',
         members: null,
@@ -106,7 +108,7 @@ export const groups = [
         id: 'cama-ai-tools',
         title: 'AI Tools - Computer Assisted Mass Appraisal',
         period: 'March 4, 2024 - April 30, 2024',
-        stack: [react, tailwind, postgres, python],
+        stack: [react, tailwind, postgres, python, docker],
         description:
           'A mostly solo-developed AI module built for Computer Assisted Mass Appraisal (CAMA) to auto-appraise land parcels that lack unit values. Using React and Python ML models (XGBoost, Random Forest, Linear Regression), the tool calculates land predictions, visualizes residual errors via charts and map overlays, and exports updated GIS Shapefiles and PDF evaluation reports. Fully Dockerized for VM deployment.',
         members: null,

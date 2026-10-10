@@ -20,7 +20,9 @@ const findSvg = (keyword, fallback) => {
 const techStack = [
   { label: 'React', src: findSvg('react', '/icons/react.svg') },
   { label: 'Python', src: findSvg('python', '/icons/python.svg') },
+  { label: 'FastAPI', src: findSvg('fastapi', '/icons/fastapi.svg') },
   { label: 'PostgreSQL', src: findSvg('postgres', '/icons/postgresql.svg') },
+  { label: 'Docker', src: findSvg('docker', '/icons/docker.svg') },
   { label: 'HTML5', src: findSvg('html', '/icons/html5.svg') },
   { label: 'CSS3', src: findSvg('css', '/icons/css3.svg') },
 ]
@@ -55,7 +57,7 @@ function TechIcon({ tech }) {
 }
 
 export default function AboutMe() {
-  const [sectionRef, inView] = useInView(0, '0px 0px -22% 0px')
+  const [sectionRef, inView] = useInView(0, '0px 0px -22% 0px', true)
   useScrollVars(sectionRef)
 
   return (
@@ -101,7 +103,7 @@ export default function AboutMe() {
             style={{ ...delay(300), transformOrigin: 'left center' }}
           />
 
-          <div className="mt-[clamp(1.25rem,2vw,2.8rem)] flex max-w-[31em] flex-col gap-[1.1em] text-justify text-[clamp(1rem,1.22vw,1.7rem)] font-light leading-[1.5] text-white/95 hyphens-auto [text-shadow:0_1px_18px_rgba(40,0,35,0.45)]">
+          <div className="mt-[clamp(1.25rem,2vw,2.8rem)] flex max-w-[31em] flex-col gap-[1.1em] text-left text-[clamp(1rem,1.22vw,1.7rem)] font-light leading-[1.5] text-white/95 [text-shadow:0_1px_18px_rgba(40,0,35,0.45)]">
             {paragraphs.map((paragraph, index) => (
               <p
                 key={paragraph.slice(0, 24)}
@@ -115,7 +117,7 @@ export default function AboutMe() {
         </div>
 
         <div className="flex w-full max-w-sm flex-col self-center lg:w-[25vw] lg:max-w-[34rem] lg:shrink-0 lg:self-start">
-          <ul className="flex items-center justify-end gap-[clamp(0.8rem,1.5vw,2rem)] pb-[clamp(0.4rem,0.6vw,0.9rem)]">
+          <ul className="flex flex-wrap items-center justify-end gap-[clamp(0.8rem,1.5vw,2rem)] pb-[clamp(0.4rem,0.6vw,0.9rem)]">
             {techStack.map((tech, index) => (
               <li
                 key={tech.label}

@@ -14,25 +14,36 @@ import {
 } from '../data/secret'
 import './secret.css'
 
-const DEFAULT_HIT = 12.27
-const MIN_HIT = 9.3
-const ARM_LAG = 6.4
-const TOTAL_LAG = 7.5
+const DEFAULT_HIT = 10.3
+const MIN_HIT = 10.3
 const LAST_TRACK_KEY = 'gunbarrel-last-track'
 
-const TRAILS = [1, 2, 3, 4, 5]
+const TRAIL_COUNT = 5
+const TRAIL_LAG_SECONDS = 0.1
+const RIGHT_STOP_VW = 87.5
+const TRAILS = Array.from({ length: TRAIL_COUNT }, (_, index) => index + 1)
 
-const AUDIO_VOLUME = 0.9
+const AUDIO_VOLUME = 0.5
 const AUDIO_WAIT_MS = 2500
 const AUDIO_SKIP_S = 0
 
-const BLOOD_LEAD = 0.3
-const BLOOD_SECONDS = 5.6
-const SHAKE_SECONDS = BLOOD_LEAD + BLOOD_SECONDS
 const BLOOD_REACH = 1.4
-const SHAKE_HZ = 3.2
-const SHAKE_SHARE = 0.006
-const DOT_SCALE = 3.1
+const BLOOD_SECONDS = 6.5
+const SWAY_TRIGGER = 0.5
+const BLOOD_HOLD_SECONDS = 0.5
+const BLOOD_FADE_SECONDS = 1.2
+const SWAY_COUNT = 3
+const SWAY_SECONDS = 4
+const SWAY_SHARE = 0.09
+const SWAY_END_ANGLE = ((2 * SWAY_COUNT - 1) * Math.PI) / 2
+const DROP_SECONDS = 1
+const DROP_PAUSE_SECONDS = 1
+const DROP_X_SHARE = 0.17
+const DROP_Y_SHARE = 0.26
+const RETURN_SECONDS = 1
+const CHOREO_SECONDS =
+  SWAY_SECONDS + DROP_SECONDS + DROP_PAUSE_SECONDS + RETURN_SECONDS
+const DOT_SCALE = 3.125
 const LOBES = [
   { x: 0.06, w: 0.04, a: 0.22 },
   { x: 0.17, w: 0.035, a: 0.34 },
@@ -48,6 +59,44 @@ const clamp01 = (value) => Math.min(1, Math.max(0, value))
 
 const smooth = (value) => value * value * (3 - 2 * value)
 
+const BARREL_LANDS = 7
+const BARREL_START = 62
+const BARREL_FULL = 150
+const BARREL_OUTER = 560
+const BARREL_TWIST = 2.4
+const BARREL_GAP = 5
+const BARREL_STEPS = 110
+const BARREL_ROUGH = 0.09
+
+const noise = (seed) => {
+  const value = Math.sin(seed * 12.9898) * 43758.5453
+  return value - Math.floor(value)
+}
+
+const barrelPath = (land) => {
+  const sector = (Math.PI * 2) / BARREL_LANDS
+  const mid = land * sector + sector / 2
+  const left = []
+  const right = []
+
+  for (let step = 0; step <= BARREL_STEPS; step += 1) {
+    const radius = BARREL_START * (BARREL_OUTER / BARREL_START) ** (step / BARREL_STEPS)
+    const twist = BARREL_TWIST * Math.log(radius / BARREL_START)
+    const grow = clamp01((radius - BARREL_START) / (BARREL_FULL - BARREL_START))
+    const reach = (sector / 2 - BARREL_GAP / (2 * radius)) * Math.sqrt(grow)
+    const rough = BARREL_ROUGH * Math.exp(-((Math.log(radius / 120) / 0.7) ** 2))
+    const lead = mid + twist - reach + (noise(step + land * 31) - 0.5) * rough * 0.4
+    const trail = mid + twist + reach + (noise(step * 1.7 + land * 17 + 5) - 0.5) * rough
+
+    left.push(`${(Math.cos(lead) * radius).toFixed(2)} ${(Math.sin(lead) * radius).toFixed(2)}`)
+    right.push(`${(Math.cos(trail) * radius).toFixed(2)} ${(Math.sin(trail) * radius).toFixed(2)}`)
+  }
+
+  return `M${left.join('L')}L${right.reverse().join('L')}Z`
+}
+
+const BARREL_PATHS = Array.from({ length: BARREL_LANDS }, (_, land) => barrelPath(land))
+
 const sheetDepth = (x, progress, height) => {
   const drift = progress * 1.6
   const body =
@@ -62,21 +111,76 @@ const sheetDepth = (x, progress, height) => {
     lobe += a * Math.exp(-offset * offset)
   }
 
-  const pool = height * 0.03 * smooth(clamp01(progress / 0.08))
-  const flow = smooth(clamp01((progress - 0.12) / 0.88))
+  const poolAmount = 1 - (1 - clamp01(progress / 0.08)) ** 2
+  const pool = height * 0.03 * poolAmount
+  const flow = 0.5 * clamp01(progress) + 0.5 * smooth(clamp01(progress))
 
   return pool + height * BLOOD_REACH * flow * (body + lobe * clamp01(progress * 3))
 }
+
+const meanDepth = (progress) => {
+  const samples = 100
+  let total = 0
+
+  for (let index = 0; index <= samples; index += 1) {
+    total += sheetDepth(index / samples, progress, 1)
+  }
+
+  return total / (samples + 1)
+}
+
+const progressAtTrigger = () => {
+  let low = 0
+  let high = 1
+
+  for (let step = 0; step < 24; step += 1) {
+    const mid = (low + high) / 2
+    if (meanDepth(mid) < SWAY_TRIGGER) low = mid
+    else high = mid
+  }
+
+  return high
+}
+
+const minDepth = (progress) => {
+  const samples = 400
+  let lowest = Infinity
+
+  for (let index = 0; index <= samples; index += 1) {
+    lowest = Math.min(lowest, sheetDepth(index / samples, progress, 1))
+  }
+
+  return lowest
+}
+
+const progressAtCover = () => {
+  let low = 0
+  let high = 1
+
+  for (let step = 0; step < 24; step += 1) {
+    const mid = (low + high) / 2
+    if (minDepth(mid) < 1) low = mid
+    else high = mid
+  }
+
+  return high
+}
+
+const SWAY_DELAY_SECONDS = progressAtTrigger() * BLOOD_SECONDS
+const BLOOD_OUT_DELAY_SECONDS =
+  progressAtCover() * BLOOD_SECONDS + BLOOD_HOLD_SECONDS
+const ARM_LAG = SWAY_DELAY_SECONDS + CHOREO_SECONDS + 0.4
+const TOTAL_LAG = SWAY_DELAY_SECONDS + CHOREO_SECONDS + 1.5
 
 const paintBlood = (ctx, width, height, progress) => {
   ctx.clearRect(0, 0, width, height)
   if (progress <= 0) return
 
   const fill = ctx.createLinearGradient(0, 0, 0, height)
-  fill.addColorStop(0, '#5a050c')
-  fill.addColorStop(0.3, '#9d0b16')
-  fill.addColorStop(0.65, '#cf111d')
-  fill.addColorStop(1, '#d9161f')
+  fill.addColorStop(0, '#3a0414')
+  fill.addColorStop(0.3, '#5e0a22')
+  fill.addColorStop(0.65, '#800020')
+  fill.addColorStop(1, '#8f1030')
 
   ctx.fillStyle = fill
 
@@ -105,8 +209,8 @@ const paintBlood = (ctx, width, height, progress) => {
     height / 2,
     Math.max(width, height) * 0.75,
   )
-  vignette.addColorStop(0, 'rgba(35, 0, 5, 0)')
-  vignette.addColorStop(1, 'rgba(35, 0, 5, 0.5)')
+  vignette.addColorStop(0, 'rgba(25, 0, 10, 0)')
+  vignette.addColorStop(1, 'rgba(25, 0, 10, 0.5)')
   ctx.fillStyle = vignette
   ctx.fillRect(0, 0, width, height)
   ctx.restore()
@@ -151,6 +255,35 @@ const delay = (ms) => ({ '--d': ms })
 
 const pad = (value) => String(value).padStart(2, '0')
 
+const lerp = (from, to, amount) => from + (to - from) * amount
+
+const swayPath = (seconds, width, height) => {
+  const reach = width * SWAY_SHARE
+  const dropX = width * DROP_X_SHARE
+  const dropY = height * DROP_Y_SHARE
+
+  if (seconds < SWAY_SECONDS) {
+    const angle = (seconds / SWAY_SECONDS) * SWAY_END_ANGLE
+    return { x: -Math.sin(angle) * reach, y: 0 }
+  }
+
+  const dropped = seconds - SWAY_SECONDS
+
+  if (dropped < DROP_SECONDS) {
+    const amount = smooth(clamp01(dropped / DROP_SECONDS))
+    return { x: lerp(-reach, dropX, amount), y: lerp(0, dropY, amount) }
+  }
+
+  const held = dropped - DROP_SECONDS
+
+  if (held < DROP_PAUSE_SECONDS) {
+    return { x: dropX, y: dropY }
+  }
+
+  const amount = smooth(clamp01((held - DROP_PAUSE_SECONDS) / RETURN_SECONDS))
+  return { x: lerp(dropX, 0, amount), y: lerp(dropY, 0, amount) }
+}
+
 function Blood() {
   const canvasRef = useRef(null)
 
@@ -182,13 +315,10 @@ function Blood() {
       paintBlood(ctx, width, height, progress)
 
       if (shake > 0 && shake < 1) {
-        const seconds = shake * SHAKE_SECONDS
-        const fade = 1 - shake * shake
-        const wave =
-          Math.sin(seconds * Math.PI * 2 * SHAKE_HZ) +
-          0.4 * Math.sin(seconds * Math.PI * 2 * SHAKE_HZ * 1.7 + 1.3)
-        const offset = (wave * fade * width * SHAKE_SHARE) / DOT_SCALE
-        dot.style.transform = `translateX(${offset.toFixed(2)}px)`
+        const { x, y } = swayPath(shake * CHOREO_SECONDS, width, height)
+        const offsetX = (x / DOT_SCALE).toFixed(2)
+        const offsetY = (y / DOT_SCALE).toFixed(2)
+        dot.style.transform = `translate(${offsetX}px, ${offsetY}px)`
       } else {
         dot.style.transform = ''
       }
@@ -208,13 +338,45 @@ function Blood() {
   return <canvas ref={canvasRef} className="gb-blood" />
 }
 
+function Barrel() {
+  return (
+    <svg className="gb-barrel" viewBox="-400 -400 800 800" aria-hidden="true">
+      <defs>
+        <radialGradient
+          id="gb-barrel-fill"
+          gradientUnits="userSpaceOnUse"
+          cx="0"
+          cy="0"
+          r="400"
+        >
+          <stop offset="0.15" stopColor="#f1eef6" />
+          <stop offset="0.5" stopColor="#d8d5dd" />
+          <stop offset="1" stopColor="#c4c2c9" />
+        </radialGradient>
+      </defs>
+      {BARREL_PATHS.map((d, index) => (
+        <path key={index} d={d} fill="url(#gb-barrel-fill)" />
+      ))}
+    </svg>
+  )
+}
+
 function Intro() {
   return (
     <div className="gb-stage" aria-hidden="true">
       {TRAILS.map((step) => (
-        <span key={step} className={`gb-dot gb-trail gb-trail-${step}`} />
+        <span
+          key={step}
+          className="gb-dot gb-trail"
+          style={{
+            '--x': `${(RIGHT_STOP_VW * step) / (TRAIL_COUNT + 1)}vw`,
+            '--at': `calc(var(--t0) + var(--sweep) * ${step / (TRAIL_COUNT + 1)} + ${TRAIL_LAG_SECONDS}s)`,
+          }}
+        />
       ))}
-      <span className="gb-dot gb-main" />
+      <span className="gb-dot gb-main">
+        <Barrel />
+      </span>
       <Blood />
     </div>
   )
@@ -544,18 +706,33 @@ export default function Secret() {
   const [armed, setArmed] = useState(() => prefersReducedMotion())
   const [run, setRun] = useState(0)
   const [muted, setMuted] = useState(false)
+  const [audioActive, setAudioActive] = useState(false)
   const audioRef = useRef(null)
   const mutedRef = useRef(false)
+  const keepAudioRef = useRef(false)
 
   useEffect(() => {
     mutedRef.current = muted
     if (audioRef.current) audioRef.current.muted = muted
   }, [muted])
 
+  useEffect(
+    () => () => {
+      if (audioRef.current) fadeOutAndStop(audioRef.current)
+    },
+    [],
+  )
+
   useEffect(() => {
     if (phase !== 'intro') return undefined
 
     setStarted(false)
+
+    if (audioRef.current) {
+      fadeOutAndStop(audioRef.current)
+      audioRef.current = null
+      setAudioActive(false)
+    }
 
     const chosen = pickTrack()
     setTrack(chosen)
@@ -568,6 +745,11 @@ export default function Secret() {
 
     let cancelled = false
     let began = false
+
+    const onEnded = () => {
+      if (audioRef.current === audio) audioRef.current = null
+      setAudioActive(false)
+    }
 
     const begin = () => {
       if (cancelled || began) return
@@ -584,7 +766,9 @@ export default function Secret() {
       audio
         .play()
         .then(() => {
-          if (!cancelled) setStarted(true)
+          if (cancelled) return
+          setStarted(true)
+          setAudioActive(true)
         })
         .catch((error) => {
           if (cancelled) return
@@ -593,6 +777,7 @@ export default function Secret() {
         })
     }
 
+    audio.addEventListener('ended', onEnded)
     audio.addEventListener('canplaythrough', begin, { once: true })
     const fallback = setTimeout(begin, AUDIO_WAIT_MS)
     audio.src = chosen.src
@@ -602,12 +787,28 @@ export default function Secret() {
       cancelled = true
       clearTimeout(fallback)
       audio.removeEventListener('canplaythrough', begin)
+
+      if (keepAudioRef.current && !audio.paused && !audio.ended) {
+        keepAudioRef.current = false
+        return
+      }
+
+      keepAudioRef.current = false
+      audio.removeEventListener('ended', onEnded)
       fadeOutAndStop(audio)
       if (audioRef.current === audio) audioRef.current = null
+      setAudioActive(false)
     }
   }, [phase, run])
 
+  const skip = useCallback(() => {
+    keepAudioRef.current = false
+    setArmed(true)
+    setPhase('done')
+  }, [])
+
   const finish = useCallback(() => {
+    keepAudioRef.current = true
     setArmed(true)
     setPhase('done')
   }, [])
@@ -620,7 +821,7 @@ export default function Secret() {
     const doneTimer = setTimeout(finish, (hit + TOTAL_LAG) * 1000)
     const onKey = (event) => {
       if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
-        finish()
+        skip()
       }
     }
 
@@ -630,7 +831,7 @@ export default function Secret() {
       clearTimeout(doneTimer)
       window.removeEventListener('keydown', onKey)
     }
-  }, [phase, started, run, finish, track])
+  }, [phase, started, run, finish, skip, track])
 
   const start = useCallback(() => {
     setRun((count) => count + 1)
@@ -646,12 +847,20 @@ export default function Secret() {
 
   const playing = phase === 'intro' && started
   const hit = track?.hit ? Math.max(track.hit, MIN_HIT) : null
-  const timeline = hit
-    ? {
-        '--t-blood': `${hit}s`,
-        '--glide-dur': `calc(${hit}s - 1.6s - var(--t-glide))`,
-      }
-    : undefined
+  const timeline = {
+    '--choreo': `${CHOREO_SECONDS}s`,
+    '--stop': `${RIGHT_STOP_VW}vw`,
+    '--blood-dur': `${BLOOD_SECONDS}s`,
+    '--sway-delay': `${SWAY_DELAY_SECONDS}s`,
+    '--blood-out-delay': `${BLOOD_OUT_DELAY_SECONDS}s`,
+    '--blood-fade': `${BLOOD_FADE_SECONDS}s`,
+    '--open': DOT_SCALE,
+    ...(hit
+      ? {
+          '--t0': `calc(${hit}s - var(--sweep) - var(--open-dur) - var(--pause) - var(--glide-dur) - var(--hold))`,
+        }
+      : {}),
+  }
 
   return (
     <div className="secret-page min-h-screen bg-black" style={timeline}>
@@ -668,19 +877,22 @@ export default function Secret() {
           )}
           <button
             type="button"
-            onClick={finish}
+            onClick={skip}
             className="fixed bottom-6 right-6 z-70 cursor-pointer text-sm tracking-[0.3em] text-white/50 transition-colors hover:text-white"
           >
             SKIP
           </button>
-          <button
-            type="button"
-            onClick={() => setMuted((value) => !value)}
-            className="fixed bottom-6 left-6 z-70 cursor-pointer text-sm tracking-[0.3em] text-white/50 transition-colors hover:text-white"
-          >
-            {muted ? 'SOUND OFF' : 'SOUND ON'}
-          </button>
         </>
+      ) : null}
+
+      {phase === 'intro' || audioActive ? (
+        <button
+          type="button"
+          onClick={() => setMuted((value) => !value)}
+          className="fixed bottom-6 left-6 z-70 cursor-pointer text-sm tracking-[0.3em] text-white/50 transition-colors hover:text-white"
+        >
+          {muted ? 'SOUND OFF' : 'SOUND ON'}
+        </button>
       ) : null}
 
       {phase === 'gate' ? <Gate onStart={start} /> : null}

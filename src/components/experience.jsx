@@ -74,7 +74,7 @@ function TechIcon({ tech }) {
 
 function IconRow({ items, baseDelay }) {
   return (
-    <ul className="flex flex-nowrap items-center justify-center gap-[clamp(0.5rem,1vw,1.5rem)]">
+    <ul className="flex flex-wrap items-center justify-center gap-[clamp(0.5rem,1vw,1.5rem)]">
       {items.map((tech, index) => (
         <li
           key={tech.label}
@@ -130,9 +130,11 @@ function Card({ index, title, footer, children }) {
             {title}
           </h3>
           {children}
-        </div>
-        <div className="flex h-[clamp(3.25rem,4.6vw,5rem)] items-end justify-center pt-[clamp(0.75rem,1.2vw,1.25rem)]">
-          {footer}
+          {footer ? (
+            <div className="mt-auto flex justify-center pt-[clamp(0.75rem,1.2vw,1.25rem)]">
+              {footer}
+            </div>
+          ) : null}
         </div>
       </article>
     </div>
@@ -140,7 +142,7 @@ function Card({ index, title, footer, children }) {
 }
 
 export default function Experience() {
-  const [sectionRef, inView] = useInView(0, '0px 0px -22% 0px')
+  const [sectionRef, inView] = useInView(0, '0px 0px -22% 0px', true)
   useScrollVars(sectionRef)
 
   return (

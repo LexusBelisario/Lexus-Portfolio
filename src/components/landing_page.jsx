@@ -1,5 +1,4 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import gmail_icon from '../assets/icons/gmail.svg'
 import github_icon from '../assets/icons/github.svg'
 import linkedin_icon from '../assets/icons/linkedin.svg'
 import george from '../assets/beatles/george.svg'
@@ -29,6 +28,9 @@ const TYPE_START = 1300
 
 const NAME = 'Lexus Belisario'
 
+const PAUL_CLICKS = 4
+const PAUL_WINDOW = 1500
+
 const nameWords = NAME.split(' ').map((word, index, all) => ({
   word,
   offset: all.slice(0, index).join(' ').length + (index > 0 ? 1 : 0),
@@ -45,11 +47,6 @@ const socials = [
     src: github_icon,
     href: 'https://github.com/LexusBelisario',
   },
-  // {
-  //   label: 'Gmail',
-  //   src: gmail_icon,
-  //   href: 'mailto:',
-  // },
 ]
 
 const band = [
@@ -131,18 +128,26 @@ export default function LandingPage() {
   const nextIndex = useRef(1)
   const [ready, setReady] = useState(false)
 
-  const [paulClicks, setPaulClicks] = useState(0)
+  const paulClicks = useRef({ count: 0, last: 0 })
 
   const handlePaulClick = () => {
-    setPaulClicks((count) => {
-      const newCount = count + 1
+    const now = Date.now()
+    const state = paulClicks.current
 
-      if (newCount === 4) {
-        window.location.href = '/secret'
-      }
+    state.count = now - state.last > PAUL_WINDOW ? 1 : state.count + 1
+    state.last = now
 
-      return newCount
-    })
+    if (state.count === PAUL_CLICKS) {
+      state.count = 0
+      window.location.href = '/secret'
+    }
+  }
+
+  const handlePaulKey = (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault()
+      handlePaulClick()
+    }
   }
 
   useEffect(() => {
@@ -230,12 +235,9 @@ export default function LandingPage() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={social.label}
+                className="flex size-10 items-center justify-center rounded-full bg-white/90 shadow-md shadow-black/30 transition-transform duration-300 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white motion-reduce:transition-none"
               >
-                <img
-                  src={social.src}
-                  alt=""
-                  className="h-8 w-8"
-                />
+                <img src={social.src} alt="" className="size-6" />
               </a>
             </li>
           ))}
@@ -275,11 +277,14 @@ export default function LandingPage() {
               <img
                 src={member.src}
                 alt={member.name}
-                onClick={
-                  member.name === 'Paul'
-                    ? handlePaulClick
-                    : undefined
-                }
+                {...(member.name === 'Paul'
+                  ? {
+                      role: 'button',
+                      tabIndex: 0,
+                      onClick: handlePaulClick,
+                      onKeyDown: handlePaulKey,
+                    }
+                  : {})}
                 className={`
                   enter-walk
                   peer block h-auto w-full origin-bottom
@@ -287,12 +292,16 @@ export default function LandingPage() {
                   transition-all duration-300
                   hover:-translate-y-3
                   hover:rotate-2
+                  focus-visible:-translate-y-3
+                  focus-visible:outline-2
+                  focus-visible:outline-offset-4
+                  focus-visible:outline-white
                   ${member.hoverShadow}
                   motion-reduce:transition-none
                 `}
                 style={{ '--i': band.length - 1 - index }}
               />
-              <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/70 px-4 py-1.5 text-sm font-semibold text-white opacity-0 backdrop-blur-sm transition-all duration-300 peer-hover:-translate-y-3 peer-hover:opacity-100 motion-reduce:transition-none sm:text-base">
+              <span className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 -translate-x-1/2 whitespace-nowrap rounded-full bg-black/70 px-4 py-1.5 text-sm font-semibold text-white opacity-0 backdrop-blur-sm transition-all duration-300 peer-hover:-translate-y-3 peer-hover:opacity-100 peer-focus-visible:-translate-y-3 peer-focus-visible:opacity-100 motion-reduce:transition-none sm:text-base">
                 {member.label}
               </span>
             </div>
@@ -305,7 +314,7 @@ export default function LandingPage() {
         >
           <a
             href="#about"
-            className="leave-fade flex items-center gap-2 text-xl text-white/80 transition-colors hover:text-white"
+            className="leave-fade flex items-center gap-2 text-xl text-white/80 transition-colors [text-shadow:0_1px_12px_rgba(0,0,0,0.6)] hover:text-white"
           >
             Scroll down for more
             <svg

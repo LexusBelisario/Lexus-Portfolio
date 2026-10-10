@@ -87,7 +87,7 @@ export function useSmoothAnchors() {
   }, [])
 }
 
-export function useInView(threshold = 0.15, rootMargin = '0px') {
+export function useInView(threshold = 0.15, rootMargin = '0px', once = false) {
   const ref = useRef(null)
   const [inView, setInView] = useState(false)
 
@@ -96,14 +96,23 @@ export function useInView(threshold = 0.15, rootMargin = '0px') {
     if (!node) return undefined
 
     const observer = new IntersectionObserver(
-      ([entry]) =>
-        setInView(entry.isIntersecting && entry.intersectionRatio >= threshold),
+      ([entry]) => {
+        const visible =
+          entry.isIntersecting && entry.intersectionRatio >= threshold
+
+        if (visible) {
+          setInView(true)
+          if (once) observer.disconnect()
+        } else if (!once) {
+          setInView(false)
+        }
+      },
       { threshold: [0, threshold], rootMargin },
     )
 
     observer.observe(node)
     return () => observer.disconnect()
-  }, [threshold, rootMargin])
+  }, [threshold, rootMargin, once])
 
   return [ref, inView]
 }

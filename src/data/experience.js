@@ -50,7 +50,9 @@ export const spotify = {
 export const activeStack = [
   { label: 'React', src: findSvg('react') },
   { label: 'Python', src: findSvg('python') },
+  { label: 'FastAPI', src: findSvg('fastapi') },
   { label: 'PostgreSQL', src: findSvg('postgres') },
+  { label: 'Docker', src: findSvg('docker') },
   { label: 'HTML5', src: findSvg('html') },
   { label: 'CSS3', src: findSvg('css') },
 ]
@@ -58,7 +60,6 @@ export const activeStack = [
 export const exploring = [
   { label: 'TypeScript', src: findSvg('typescript') },
   { label: 'Java', src: findSvg('java') },
-  { label: 'Docker', src: findSvg('docker') },
   { label: 'MongoDB', src: findSvg('mongo') },
   { label: 'Figma', src: findSvg('figma') },
 ]
