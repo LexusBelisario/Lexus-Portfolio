@@ -27,6 +27,12 @@ function useActiveSection(ids) {
         if (node && node.getBoundingClientRect().top <= line) current = id
       }
 
+      const atBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 4
+
+      if (atBottom) current = ids[ids.length - 1]
+
       setActive(current)
     }
 

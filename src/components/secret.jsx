@@ -14,18 +14,32 @@ import {
 } from '../data/secret'
 import './secret.css'
 
-const DEFAULT_HIT = 10.3
 const MIN_HIT = 10.3
+const AUDIO_LEAD_SECONDS = 0.5
+const DEFAULT_HIT = MIN_HIT + AUDIO_LEAD_SECONDS
 const LAST_TRACK_KEY = 'gunbarrel-last-track'
 
 const TRAIL_COUNT = 5
 const TRAIL_LAG_SECONDS = 0.1
-const RIGHT_STOP_VW = 87.5
+const RIGHT_STOP_VW = 94
 const TRAILS = Array.from({ length: TRAIL_COUNT }, (_, index) => index + 1)
 
 const AUDIO_VOLUME = 0.5
+
+const TRACK_VOLUMES = {
+  yolt: 1,
+}
+
+const trackVolume = (track) => {
+  const match = Object.entries(TRACK_VOLUMES).find(([key]) => track.src.includes(key))
+  return match ? match[1] : AUDIO_VOLUME
+}
 const AUDIO_WAIT_MS = 2500
 const AUDIO_SKIP_S = 0
+
+const GUNSHOT_SRC = '/audio/gunshot.mp3'
+const GUNSHOT_VOLUME = 0.4
+const GUNSHOT_OFFSET_SECONDS = 0
 
 const BLOOD_REACH = 1.4
 const BLOOD_SECONDS = 6.5
@@ -43,7 +57,7 @@ const DROP_Y_SHARE = 0.26
 const RETURN_SECONDS = 1
 const CHOREO_SECONDS =
   SWAY_SECONDS + DROP_SECONDS + DROP_PAUSE_SECONDS + RETURN_SECONDS
-const DOT_SCALE = 3.125
+const DOT_SCALE = 3.4
 const LOBES = [
   { x: 0.06, w: 0.04, a: 0.22 },
   { x: 0.17, w: 0.035, a: 0.34 },
@@ -54,6 +68,26 @@ const LOBES = [
   { x: 0.79, w: 0.05, a: 0.24 },
   { x: 0.92, w: 0.04, a: 0.3 },
 ]
+
+const barrelImages = import.meta.glob('../assets/images/barrel.{png,jpg,jpeg,webp,avif,svg}', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+})
+
+const BARREL_IMAGE = Object.values(barrelImages)[0] ?? ''
+
+const BARREL_IMAGE_ASPECT = 2576 / 1449
+const BARREL_IMAGE_FOCUS_X = 0.5361
+const BARREL_IMAGE_FOCUS_Y = 0.4993
+const BARREL_IMAGE_RADIUS = 0.1362
+const BARREL_IMAGE_FADE_X = 0.12
+const BARREL_IMAGE_FADE_Y = 0.015
+
+const BARREL_IMAGE_WIDTH = 50 / BARREL_IMAGE_RADIUS
+const BARREL_IMAGE_HEIGHT = BARREL_IMAGE_WIDTH / BARREL_IMAGE_ASPECT
+const BARREL_IMAGE_LEFT = -BARREL_IMAGE_FOCUS_X * BARREL_IMAGE_WIDTH
+const BARREL_IMAGE_TOP = -BARREL_IMAGE_FOCUS_Y * BARREL_IMAGE_HEIGHT
 
 const clamp01 = (value) => Math.min(1, Math.max(0, value))
 
@@ -66,14 +100,17 @@ const BARREL_OUTER = 560
 const BARREL_TWIST = 2.4
 const BARREL_GAP = 5
 const BARREL_STEPS = 110
-const BARREL_ROUGH = 0.09
+const BARREL_ROUGH = 0.035
+const BARREL_SHADOW_DEG = 2.9
+const BARREL_RING_START = 66
+const BARREL_RING_STEP = 1.045
 
 const noise = (seed) => {
   const value = Math.sin(seed * 12.9898) * 43758.5453
   return value - Math.floor(value)
 }
 
-const barrelPath = (land) => {
+const barrelLand = (land) => {
   const sector = (Math.PI * 2) / BARREL_LANDS
   const mid = land * sector + sector / 2
   const left = []
@@ -92,10 +129,21 @@ const barrelPath = (land) => {
     right.push(`${(Math.cos(trail) * radius).toFixed(2)} ${(Math.sin(trail) * radius).toFixed(2)}`)
   }
 
-  return `M${left.join('L')}L${right.reverse().join('L')}Z`
+  return {
+    outline: `M${left.join('L')}L${[...right].reverse().join('L')}Z`,
+    lead: `M${left.join('L')}`,
+    trail: `M${right.join('L')}`,
+  }
 }
 
-const BARREL_PATHS = Array.from({ length: BARREL_LANDS }, (_, land) => barrelPath(land))
+const BARREL_GEOMETRY = Array.from({ length: BARREL_LANDS }, (_, land) => barrelLand(land))
+
+const BARREL_RINGS = []
+for (let radius = BARREL_RING_START; radius < BARREL_OUTER; radius *= BARREL_RING_STEP) {
+  BARREL_RINGS.push(Number(radius.toFixed(1)))
+}
+
+const BARREL_BORE = `M-${BARREL_OUTER} 0a${BARREL_OUTER} ${BARREL_OUTER} 0 1 0 ${BARREL_OUTER * 2} 0a${BARREL_OUTER} ${BARREL_OUTER} 0 1 0 -${BARREL_OUTER * 2} 0ZM-50 0a50 50 0 1 1 100 0a50 50 0 1 1 -100 0Z`
 
 const sheetDepth = (x, progress, height) => {
   const drift = progress * 1.6
@@ -177,10 +225,10 @@ const paintBlood = (ctx, width, height, progress) => {
   if (progress <= 0) return
 
   const fill = ctx.createLinearGradient(0, 0, 0, height)
-  fill.addColorStop(0, '#3a0414')
-  fill.addColorStop(0.3, '#5e0a22')
-  fill.addColorStop(0.65, '#800020')
-  fill.addColorStop(1, '#8f1030')
+  fill.addColorStop(0, '#4d0000')
+  fill.addColorStop(0.3, '#660000')
+  fill.addColorStop(0.65, '#800000')
+  fill.addColorStop(1, '#800000')
 
   ctx.fillStyle = fill
 
@@ -209,8 +257,8 @@ const paintBlood = (ctx, width, height, progress) => {
     height / 2,
     Math.max(width, height) * 0.75,
   )
-  vignette.addColorStop(0, 'rgba(25, 0, 10, 0)')
-  vignette.addColorStop(1, 'rgba(25, 0, 10, 0.5)')
+  vignette.addColorStop(0, 'rgba(20, 0, 0, 0)')
+  vignette.addColorStop(1, 'rgba(20, 0, 0, 0.5)')
   ctx.fillStyle = vignette
   ctx.fillRect(0, 0, width, height)
   ctx.restore()
@@ -250,6 +298,16 @@ const fadeOutAndStop = (audio) => {
 
 const prefersReducedMotion = () =>
   window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+const readSeconds = (name, fallback) => {
+  const node = document.querySelector('.secret-page')
+  if (!node) return fallback
+
+  const value = getComputedStyle(node).getPropertyValue(name).trim()
+  const seconds = value.endsWith('ms') ? parseFloat(value) / 1000 : parseFloat(value)
+
+  return Number.isFinite(seconds) ? seconds : fallback
+}
 
 const delay = (ms) => ({ '--d': ms })
 
@@ -339,24 +397,159 @@ function Blood() {
 }
 
 function Barrel() {
+  if (BARREL_IMAGE) {
+    return (
+      <svg className="gb-barrel" viewBox="-400 -400 800 800" aria-hidden="true">
+        <defs>
+          <linearGradient id="gb-fade-x-grad">
+            <stop offset="0" stopColor="#fff" stopOpacity="0" />
+            <stop offset={BARREL_IMAGE_FADE_X} stopColor="#fff" stopOpacity="1" />
+            <stop offset={1 - BARREL_IMAGE_FADE_X} stopColor="#fff" stopOpacity="1" />
+            <stop offset="1" stopColor="#fff" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="gb-fade-y-grad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#fff" stopOpacity="0" />
+            <stop offset={BARREL_IMAGE_FADE_Y} stopColor="#fff" stopOpacity="1" />
+            <stop offset={1 - BARREL_IMAGE_FADE_Y} stopColor="#fff" stopOpacity="1" />
+            <stop offset="1" stopColor="#fff" stopOpacity="0" />
+          </linearGradient>
+          <mask
+            id="gb-fade-x"
+            maskUnits="userSpaceOnUse"
+            x={BARREL_IMAGE_LEFT}
+            y={BARREL_IMAGE_TOP}
+            width={BARREL_IMAGE_WIDTH}
+            height={BARREL_IMAGE_HEIGHT}
+          >
+            <rect
+              x={BARREL_IMAGE_LEFT}
+              y={BARREL_IMAGE_TOP}
+              width={BARREL_IMAGE_WIDTH}
+              height={BARREL_IMAGE_HEIGHT}
+              fill="url(#gb-fade-x-grad)"
+            />
+          </mask>
+          <mask
+            id="gb-fade-y"
+            maskUnits="userSpaceOnUse"
+            x={BARREL_IMAGE_LEFT}
+            y={BARREL_IMAGE_TOP}
+            width={BARREL_IMAGE_WIDTH}
+            height={BARREL_IMAGE_HEIGHT}
+          >
+            <rect
+              x={BARREL_IMAGE_LEFT}
+              y={BARREL_IMAGE_TOP}
+              width={BARREL_IMAGE_WIDTH}
+              height={BARREL_IMAGE_HEIGHT}
+              fill="url(#gb-fade-y-grad)"
+            />
+          </mask>
+        </defs>
+        <g mask="url(#gb-fade-y)">
+          <image
+            href={BARREL_IMAGE}
+            x={BARREL_IMAGE_LEFT}
+            y={BARREL_IMAGE_TOP}
+            width={BARREL_IMAGE_WIDTH}
+            height={BARREL_IMAGE_HEIGHT}
+            preserveAspectRatio="none"
+            mask="url(#gb-fade-x)"
+          />
+        </g>
+      </svg>
+    )
+  }
+
   return (
     <svg className="gb-barrel" viewBox="-400 -400 800 800" aria-hidden="true">
       <defs>
-        <radialGradient
-          id="gb-barrel-fill"
-          gradientUnits="userSpaceOnUse"
-          cx="0"
-          cy="0"
-          r="400"
-        >
-          <stop offset="0.15" stopColor="#f1eef6" />
-          <stop offset="0.5" stopColor="#d8d5dd" />
-          <stop offset="1" stopColor="#c4c2c9" />
+        <radialGradient id="gb-bore" gradientUnits="userSpaceOnUse" cx="0" cy="0" r={BARREL_OUTER}>
+          <stop offset="0.09" stopColor="#8a8690" />
+          <stop offset="0.2" stopColor="#55525b" />
+          <stop offset="0.45" stopColor="#2b2930" />
+          <stop offset="1" stopColor="#0b0a0d" />
         </radialGradient>
+        <radialGradient id="gb-land" gradientUnits="userSpaceOnUse" cx="0" cy="0" r={BARREL_OUTER}>
+          <stop offset="0.1" stopColor="#fbfaff" />
+          <stop offset="0.22" stopColor="#e6e3ec" />
+          <stop offset="0.4" stopColor="#c3c0ca" />
+          <stop offset="0.7" stopColor="#8d8a95" />
+          <stop offset="1" stopColor="#4f4c55" />
+        </radialGradient>
+        <radialGradient id="gb-edge" gradientUnits="userSpaceOnUse" cx="0" cy="0" r={BARREL_OUTER}>
+          <stop offset="0.1" stopColor="#fff" stopOpacity="0.95" />
+          <stop offset="0.45" stopColor="#fff" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0.1" />
+        </radialGradient>
+        <radialGradient id="gb-vignette" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="400">
+          <stop offset="0.28" stopColor="#000" stopOpacity="0" />
+          <stop offset="1" stopColor="#000" stopOpacity="0.78" />
+        </radialGradient>
+        <radialGradient id="gb-spill" gradientUnits="userSpaceOnUse" cx="0" cy="0" r="140">
+          <stop offset="0.35" stopColor="#fff" stopOpacity="0.55" />
+          <stop offset="1" stopColor="#fff" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id="gb-light" gradientUnits="userSpaceOnUse" x1="-320" y1="-320" x2="320" y2="320">
+          <stop offset="0" stopColor="#fff" stopOpacity="0.14" />
+          <stop offset="0.5" stopColor="#fff" stopOpacity="0" />
+          <stop offset="1" stopColor="#000" stopOpacity="0.3" />
+        </linearGradient>
+        <linearGradient id="gb-crown" gradientUnits="userSpaceOnUse" x1="-60" y1="-60" x2="60" y2="60">
+          <stop offset="0" stopColor="#fdfcff" />
+          <stop offset="0.5" stopColor="#bdbac3" />
+          <stop offset="1" stopColor="#6f6c76" />
+        </linearGradient>
       </defs>
-      {BARREL_PATHS.map((d, index) => (
-        <path key={index} d={d} fill="url(#gb-barrel-fill)" />
+      <path d={BARREL_BORE} fill="url(#gb-bore)" fillRule="evenodd" />
+      {BARREL_GEOMETRY.map(({ outline }, index) => (
+        <path
+          key={`shadow-${index}`}
+          d={outline}
+          fill="#000"
+          opacity="0.45"
+          transform={`rotate(${BARREL_SHADOW_DEG})`}
+        />
       ))}
+      {BARREL_GEOMETRY.map(({ outline }, index) => (
+        <path key={`land-${index}`} d={outline} fill="url(#gb-land)" />
+      ))}
+      <g fill="none" strokeWidth="0.6">
+        {BARREL_RINGS.map((radius, index) => (
+          <circle
+            key={radius}
+            r={radius}
+            stroke={index % 2 ? '#000' : '#fff'}
+            strokeOpacity={index % 2 ? 0.045 : 0.03}
+          />
+        ))}
+      </g>
+      {BARREL_GEOMETRY.map(({ lead }, index) => (
+        <path
+          key={`lead-${index}`}
+          d={lead}
+          fill="none"
+          stroke="url(#gb-edge)"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        />
+      ))}
+      {BARREL_GEOMETRY.map(({ trail }, index) => (
+        <path
+          key={`trail-${index}`}
+          d={trail}
+          fill="none"
+          stroke="#000"
+          strokeOpacity="0.35"
+          strokeWidth="1.2"
+        />
+      ))}
+      <path d={BARREL_BORE} fill="url(#gb-light)" fillRule="evenodd" />
+      <circle r={BARREL_OUTER} fill="url(#gb-vignette)" />
+      <circle r="140" fill="url(#gb-spill)" />
+      <circle r="55.5" fill="none" stroke="url(#gb-crown)" strokeWidth="10" />
+      <circle r="50.6" fill="none" stroke="#3a3840" strokeWidth="1.2" />
+      <circle r="61.6" fill="none" stroke="#000" strokeOpacity="0.45" strokeWidth="1.4" />
     </svg>
   )
 }
@@ -710,10 +903,12 @@ export default function Secret() {
   const audioRef = useRef(null)
   const mutedRef = useRef(false)
   const keepAudioRef = useRef(false)
+  const shotRef = useRef(null)
 
   useEffect(() => {
     mutedRef.current = muted
     if (audioRef.current) audioRef.current.muted = muted
+    if (shotRef.current) shotRef.current.muted = muted
   }, [muted])
 
   useEffect(
@@ -739,7 +934,7 @@ export default function Secret() {
 
     const audio = new Audio()
     audio.preload = 'auto'
-    audio.volume = AUDIO_VOLUME
+    audio.volume = trackVolume(chosen)
     audio.muted = mutedRef.current
     audioRef.current = audio
 
@@ -819,6 +1014,23 @@ export default function Secret() {
     const hit = Math.max(track?.hit ?? DEFAULT_HIT, MIN_HIT)
     const armTimer = setTimeout(() => setArmed(true), (hit + ARM_LAG) * 1000)
     const doneTimer = setTimeout(finish, (hit + TOTAL_LAG) * 1000)
+
+    const holdSeconds = readSeconds('--hold', 0.7)
+    const shot = new Audio(GUNSHOT_SRC)
+    shot.preload = 'auto'
+    shot.volume = GUNSHOT_VOLUME
+    shot.muted = mutedRef.current
+    shotRef.current = shot
+
+    const shotTimer = setTimeout(
+      () => {
+        shot.muted = mutedRef.current
+        shot.currentTime = 0
+        shot.play().catch(() => {})
+      },
+      Math.max(0, hit - holdSeconds + GUNSHOT_OFFSET_SECONDS) * 1000,
+    )
+
     const onKey = (event) => {
       if (event.key === 'Escape' || event.key === 'Enter' || event.key === ' ') {
         skip()
@@ -829,6 +1041,9 @@ export default function Secret() {
     return () => {
       clearTimeout(armTimer)
       clearTimeout(doneTimer)
+      clearTimeout(shotTimer)
+      shot.pause()
+      if (shotRef.current === shot) shotRef.current = null
       window.removeEventListener('keydown', onKey)
     }
   }, [phase, started, run, finish, skip, track])
@@ -846,7 +1061,7 @@ export default function Secret() {
   }
 
   const playing = phase === 'intro' && started
-  const hit = track?.hit ? Math.max(track.hit, MIN_HIT) : null
+  const hit = Math.max(track?.hit ?? DEFAULT_HIT, MIN_HIT)
   const timeline = {
     '--choreo': `${CHOREO_SECONDS}s`,
     '--stop': `${RIGHT_STOP_VW}vw`,
@@ -855,6 +1070,8 @@ export default function Secret() {
     '--blood-out-delay': `${BLOOD_OUT_DELAY_SECONDS}s`,
     '--blood-fade': `${BLOOD_FADE_SECONDS}s`,
     '--open': DOT_SCALE,
+    '--end-x': BARREL_IMAGE ? `${BARREL_IMAGE_FOCUS_X * 100}vw` : '50vw',
+    '--end-pct': BARREL_IMAGE ? `${BARREL_IMAGE_FOCUS_X * 100}%` : '50%',
     ...(hit
       ? {
           '--t0': `calc(${hit}s - var(--sweep) - var(--open-dur) - var(--pause) - var(--glide-dur) - var(--hold))`,

@@ -194,7 +194,7 @@ export default function LandingPage() {
   }, [ready, text, target, isDeleting])
 
   return (
-    <section ref={sectionRef} id="home" className="landing flex min-h-screen w-full">
+    <section ref={sectionRef} id="home" className="landing flex min-h-screen w-full bg-strip">
       <aside className="enter-strip flex w-12 shrink-0 items-center justify-center bg-strip sm:w-14">
         <span className="rotate-180 text-2xl font-semibold tracking-widest text-white [writing-mode:vertical-rl] sm:text-[28px]">
           SUPER DELUXE EDITION

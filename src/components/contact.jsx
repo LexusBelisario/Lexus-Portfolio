@@ -1,19 +1,34 @@
-import { useInView, useScrollVars } from '../hooks/scroll'
-import { channels, closing } from '../data/contact'
-import './section_transition.css'
+import { useState } from 'react'
+import { useInView } from '../hooks/scroll'
+import {
+  resume,
+  endLines,
+  socialsHeading,
+  socials,
+  builtWithHeading,
+  builtWith,
+  legal,
+} from '../data/contact'
 
 const delay = (ms) => ({ '--d': ms })
 
-const year = new Date().getFullYear()
+const showPlaceholders = import.meta.env.DEV
 
-const visibleChannels = channels
-  .filter((channel) => channel.href || import.meta.env.DEV)
-  .sort((a, b) => Number(!a.href) - Number(!b.href))
+const year = new Date().getFullYear()
+const years = legal.since === year ? `${year}` : `${legal.since}-${year}`
+
+const iconBox = 'block size-[clamp(1.75rem,1.9vw,2.5rem)]'
 
 const focusRing =
-  'focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#a9a2ff]'
+  'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white'
 
-function ArrowIcon() {
+const glassButton =
+  'group relative isolate inline-flex items-center gap-3 overflow-hidden rounded-full border border-white/25 bg-white/10 px-[clamp(1.25rem,1.6vw,2rem)] py-[clamp(0.55rem,0.75vw,0.95rem)] text-[clamp(0.95rem,1.1vw,1.4rem)] font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.35),0_8px_32px_rgba(0,0,0,0.35)] backdrop-blur-md backdrop-saturate-150 transition-[color,border-color,box-shadow,transform] duration-500 hover:-translate-y-0.5 hover:border-white/70 hover:text-[#120c1c] hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.7),0_12px_36px_rgba(86,195,183,0.28)] focus-visible:border-white/70 focus-visible:text-[#120c1c] motion-reduce:transition-none motion-reduce:hover:translate-y-0'
+
+const hologramLayer =
+  'pointer-events-none absolute inset-0 -z-10 rounded-full opacity-0 transition-[opacity,background-position] duration-700 ease-out [background-image:linear-gradient(110deg,#56c3b7_0%,#b9b3d9_14%,#51d0c2_28%,#c8bee1_42%,#fefefe_56%,#a4ccf3_70%,#f9fdfe_84%,#cbbcd5_100%)] [background-position:0%_50%] [background-size:220%_100%] group-hover:opacity-65 group-hover:[background-position:100%_50%] group-focus-visible:opacity-65 group-focus-visible:[background-position:100%_50%] motion-reduce:transition-none'
+
+function DownloadIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -23,138 +38,150 @@ function ArrowIcon() {
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
-      className="size-[1.1em] shrink-0 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transition-none"
+      className="size-[1.25em] shrink-0"
     >
-      <path d="M7 17 17 7" />
-      <path d="M8 7h9v9" />
+      <path d="M12 3v12" />
+      <path d="m7 11 5 5 5-5" />
+      <path d="M5 21h14" />
     </svg>
   )
 }
 
-function Row({ channel, index }) {
-  const { label, value, href, download } = channel
+function Social({ social }) {
+  const { label, src, href } = social
   const external = href.startsWith('http')
+  const image = <img src={src} alt="" className="size-full object-contain" />
 
-  const rowStyle =
-    'flex items-baseline gap-4 border-b border-white/10 px-2 py-5 sm:gap-8'
+  if (!href) {
+    if (!showPlaceholders) return null
+
+    return (
+      <li>
+        <span
+          aria-disabled="true"
+          title={`${label} - coming soon`}
+          className={`${iconBox} cursor-default opacity-40`}
+        >
+          {image}
+        </span>
+      </li>
+    )
+  }
 
   return (
-    <li className="reveal" style={delay(260 + index * 100)}>
-      {href ? (
-        <a
-          href={href}
-          download={download ? '' : undefined}
-          target={external ? '_blank' : undefined}
-          rel={external ? 'noreferrer' : undefined}
-          className={`group ${rowStyle} transition-colors duration-300 hover:bg-white/5 motion-reduce:transition-none ${focusRing}`}
-        >
-          <span className="w-24 shrink-0 text-xl font-semibold transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none sm:w-32">
-            {label}
-          </span>
-          <span className="min-w-0 flex-1 break-words text-white/70 sm:text-right">
-            {value}
-          </span>
-          <ArrowIcon />
-        </a>
-      ) : (
-        <div aria-disabled="true" title="Coming soon" className={`${rowStyle} cursor-default`}>
-          <span className="w-24 shrink-0 text-xl font-semibold text-white/50 sm:w-32">
-            {label}
-          </span>
-          <span className="flex-1 text-right">
-            <span className="rounded-full border border-white/25 px-2.5 py-0.5 text-xs uppercase tracking-widest text-white/55">
-              Coming soon
-            </span>
-          </span>
-        </div>
-      )}
+    <li>
+      <a
+        href={href}
+        target={external ? '_blank' : undefined}
+        rel={external ? 'noreferrer' : undefined}
+        aria-label={label}
+        className={`${iconBox} transition-transform duration-300 hover:-translate-y-1 hover:scale-110 motion-reduce:transition-none ${focusRing}`}
+      >
+        {image}
+      </a>
     </li>
   )
 }
 
-function Record() {
+function BuiltIcon({ tech }) {
+  const [failed, setFailed] = useState(!tech.src)
+
+  if (failed) {
+    return (
+      <span
+        title={tech.label}
+        className="flex size-full items-center justify-center rounded-full bg-white/15 text-[0.6rem] font-bold"
+      >
+        {tech.label.slice(0, 2)}
+      </span>
+    )
+  }
+
   return (
-    <div
-      className="reveal-pop size-[clamp(9rem,16vw,15rem)] shrink-0"
-      style={delay(700)}
-      aria-hidden="true"
-    >
-      <div className="relative size-full rounded-full bg-[image:repeating-radial-gradient(circle_at_center,#0b0b10_0,#0b0b10_2px,#17171f_2px,#17171f_4px)] shadow-[0_1.2vw_3vw_rgba(0,0,0,0.6)] ring-1 ring-white/10 motion-safe:animate-[spin_28s_linear_infinite]">
-        <span className="absolute inset-0 rounded-full bg-[image:conic-gradient(from_0deg,transparent_0deg,rgba(255,255,255,0.14)_36deg,transparent_84deg,transparent_180deg,rgba(255,255,255,0.1)_216deg,transparent_264deg)]" />
-        <span className="absolute inset-[35%] rounded-full bg-[#d4a12c]" />
-        <span className="absolute inset-[47.5%] rounded-full bg-black" />
-      </div>
-    </div>
+    <img
+      src={tech.src}
+      alt={tech.label}
+      title={tech.label}
+      onError={() => setFailed(true)}
+      className="size-full object-contain drop-shadow-[0_2px_6px_rgba(0,0,0,0.35)]"
+    />
   )
 }
 
 export default function Contact() {
-  const [sectionRef, inView] = useInView(0, '0px 0px -22% 0px', true)
-  useScrollVars(sectionRef)
+  const [sectionRef, inView] = useInView(0, '0px 0px -10% 0px', true)
 
   return (
     <section
       ref={sectionRef}
       id="contact"
-      className={`relative flex min-h-screen w-full flex-col overflow-hidden bg-[image:linear-gradient(to_bottom,#060a12_0%,#05070d_55%,#000_100%)] text-white ${inView ? 'about-in' : ''}`}
+      aria-label="Contact"
+      className={`relative flex w-full flex-col overflow-hidden bg-[#060a12] text-white ${inView ? 'about-in' : ''}`}
     >
       <div
-        className="pointer-events-none absolute inset-0 bg-[image:radial-gradient(ellipse_50%_28%_at_72%_42%,rgba(212,161,44,0.12),transparent_70%),radial-gradient(ellipse_55%_24%_at_16%_82%,rgba(104,78,224,0.16),transparent_75%)]"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-[62%] bg-[image:radial-gradient(ellipse_62%_78%_at_50%_100%,rgba(87,0,128,0.95)_0%,rgba(87,0,128,0.7)_40%,transparent_100%),radial-gradient(ellipse_70%_100%_at_50%_104%,rgba(255,242,215,0.42)_0%,transparent_100%)]"
         aria-hidden="true"
       />
 
-      <div className="exp-enter relative z-10 mx-auto flex w-full max-w-[1360px] flex-1 flex-col justify-center gap-[clamp(2rem,4vw,4.5rem)] px-6 pb-10 pt-24 sm:px-10">
-        <div
-          className="reveal flex flex-wrap items-baseline gap-x-5 gap-y-1 text-[clamp(1rem,1.2vw,1.5rem)] font-medium"
-          style={delay(0)}
-        >
-          <span>TRACK 04:</span>
-          <h2 className="font-semibold">Contact</h2>
+      <div className="relative z-10 flex flex-col items-center px-6 pt-[clamp(4rem,6.5vw,8rem)]">
+        <div className="flex flex-col items-center gap-[clamp(1.25rem,3.4vw,4rem)] text-center text-[clamp(1.75rem,2.6vw,3.25rem)] font-bold uppercase leading-none">
+          {endLines.map((line, index) => (
+            <p key={line} className="reveal" style={delay(index * 500)}>
+              {line}
+            </p>
+          ))}
         </div>
 
-        <div className="grid gap-[clamp(2.5rem,5vw,6rem)] lg:grid-cols-[1fr_1.1fr] lg:items-start">
-          <div className="flex flex-col gap-[clamp(1.25rem,2vw,2.25rem)]">
-            <h3
-              className="reveal max-w-[14em] font-display text-[clamp(2rem,3.6vw,4.5rem)] leading-[1.08]"
-              style={delay(120)}
+        <div className="mt-[clamp(3rem,7.5vw,9rem)] grid w-full max-w-[1100px] grid-cols-1 gap-12 text-center sm:grid-cols-2">
+          <div
+            className="reveal flex flex-col items-center gap-[clamp(0.9rem,1.1vw,1.4rem)]"
+            style={delay(900)}
+          >
+            <p className="text-[clamp(1.1rem,1.45vw,1.8rem)]">{resume.heading}</p>
+            <a
+              href={resume.href}
+              download=""
+              className={`${glassButton} ${focusRing}`}
             >
-              {closing.title}
-            </h3>
-            <p
-              className="reveal max-w-[30em] text-[clamp(1rem,1.15vw,1.5rem)] leading-relaxed text-white/80"
-              style={delay(240)}
-            >
-              {closing.intro}
-            </p>
-            <Record />
+              <span className={hologramLayer} aria-hidden="true" />
+              <DownloadIcon />
+              {resume.button}
+            </a>
           </div>
 
-          <ul className="flex flex-col border-t border-white/10">
-            {visibleChannels.map((channel, index) => (
-              <Row key={channel.id} channel={channel} index={index} />
-            ))}
-          </ul>
+          <div
+            className="reveal flex flex-col items-center gap-[clamp(0.9rem,1.1vw,1.4rem)]"
+            style={delay(1050)}
+          >
+            <p className="text-[clamp(1.1rem,1.45vw,1.8rem)]">{socialsHeading}</p>
+            <ul className="flex items-center gap-[clamp(1.25rem,2.2vw,2.75rem)]">
+              {socials.map((social) => (
+                <Social key={social.id} social={social} />
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
 
-      <footer className="relative z-10 mx-auto w-full max-w-[1360px] px-6 pb-8 sm:px-10">
+      <footer className="relative z-10 mt-[clamp(2rem,3vw,3.5rem)] grid w-full grid-cols-1 items-end gap-5 px-[max(1rem,1.2vw)] pb-[max(0.75rem,0.9vw)] text-center text-[clamp(0.7rem,0.8vw,1rem)] font-medium uppercase tracking-wide sm:grid-cols-3 sm:text-left">
+        <p className="reveal" style={delay(1200)}>
+          &copy; {years} {legal.owner}
+        </p>
+        <p className="reveal sm:text-center" style={delay(1250)}>
+          {legal.rights}
+        </p>
         <div
-          className="reveal-line h-px bg-white/20"
-          style={{ ...delay(900), transformOrigin: 'left center' }}
-        />
-        <div
-          className="reveal mt-5 flex flex-wrap items-center justify-between gap-x-8 gap-y-2 text-[clamp(0.8rem,0.85vw,1rem)] text-white/70"
-          style={delay(1000)}
+          className="reveal flex flex-col items-center gap-2 normal-case sm:items-end"
+          style={delay(1300)}
         >
-          <span className="font-semibold tracking-widest">THE END</span>
-          <span>Super Deluxe Edition</span>
-          <span>&copy; {year} Lexus Belisario</span>
-          <a
-            href="#home"
-            className="transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#a9a2ff] motion-reduce:transition-none"
-          >
-            Back to top
-          </a>
+          <p className="text-[clamp(0.75rem,0.85vw,1.05rem)]">{builtWithHeading}</p>
+          <ul className="flex items-center gap-[clamp(0.6rem,0.9vw,1.1rem)]">
+            {builtWith.map((tech) => (
+              <li key={tech.label} className="size-[clamp(1.25rem,1.4vw,1.75rem)]">
+                <BuiltIcon tech={tech} />
+              </li>
+            ))}
+          </ul>
         </div>
       </footer>
     </section>

@@ -240,7 +240,10 @@ export default function Projects() {
       id="projects"
       className="relative w-full overflow-hidden bg-[image:linear-gradient(to_bottom,#2b0f0b_0%,#140c0f_14%,#0a111f_50%,#060a12_100%)] text-white"
     >
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+      <div
+        className="pointer-events-none absolute inset-0 [-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,black_26vh)] [mask-image:linear-gradient(to_bottom,transparent_0%,black_26vh)]"
+        aria-hidden="true"
+      >
         <span className="absolute left-[0.83vw] top-[17.19vw] size-[31.25vw] rounded-full bg-[#272757] blur-[7.8125vw]" />
         <span className="absolute left-[34.27vw] top-[6.15vw] size-[31.25vw] rounded-full bg-[#272757] blur-[7.8125vw]" />
         <span className="absolute left-[34.27vw] top-[13.54vw] size-[31.25vw] rounded-full bg-[#6c6c6c] blur-[7.8125vw]" />
