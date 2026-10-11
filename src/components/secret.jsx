@@ -14,9 +14,7 @@ import {
 } from '../data/secret'
 import './secret.css'
 
-const MIN_HIT = 10.3
-const AUDIO_LEAD_SECONDS = 0.5
-const DEFAULT_HIT = MIN_HIT + AUDIO_LEAD_SECONDS
+const AUDIO_LEAD_SECONDS = 0
 const LAST_TRACK_KEY = 'gunbarrel-last-track'
 
 const TRAIL_COUNT = 5
@@ -309,6 +307,18 @@ const readSeconds = (name, fallback) => {
   return Number.isFinite(seconds) ? seconds : fallback
 }
 
+const sequenceSeconds = () =>
+  readSeconds('--sweep', 0) +
+  readSeconds('--open-dur', 0) +
+  readSeconds('--pause', 0) +
+  readSeconds('--glide-dur', 0) +
+  readSeconds('--hold', 0)
+
+const bloodStartSeconds = (track) => {
+  const sequence = sequenceSeconds()
+  return track?.hit ? Math.max(track.hit, sequence) : sequence + AUDIO_LEAD_SECONDS
+}
+
 const delay = (ms) => ({ '--d': ms })
 
 const pad = (value) => String(value).padStart(2, '0')
@@ -581,14 +591,14 @@ function FileSection({ index, title, children }) {
   return (
     <section ref={ref} className={inView ? 'about-in' : ''}>
       <div className="reveal flex items-baseline gap-4" style={delay(0)}>
-        <span className="text-xs font-semibold tracking-[0.4em] text-red-500 sm:text-sm">
+        <span className="shrink-0 whitespace-nowrap text-xs font-semibold tracking-[0.4em] text-[#f4ae52] sm:text-sm">
           FILE {pad(index)}
         </span>
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h2>
       </div>
 
       <div
-        className="reveal-line mb-10 mt-4 h-px bg-white/25"
+        className="reveal-line mb-10 mt-4 h-px bg-[#fef3e2]/25"
         style={{ ...delay(120), transformOrigin: 'left center' }}
       />
 
@@ -597,80 +607,248 @@ function FileSection({ index, title, children }) {
   )
 }
 
+const gameImageFiles = import.meta.glob('../assets/secrets/games/*.{png,jpg,jpeg,webp,avif}', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+})
+
+const slugify = (text) =>
+  text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+const GAME_IMAGES = Object.fromEntries(
+  Object.entries(gameImageFiles).map(([path, url]) => [
+    slugify(path.split('/').pop().replace(/\.[^.]+$/, '')),
+    url,
+  ]),
+)
+
+const gameImage = (game) =>
+  game.image || GAME_IMAGES[slugify(game.file ?? game.title)] || ''
+
+const movieImageFiles = import.meta.glob('../assets/secrets/movies/*.{png,jpg,jpeg,webp,avif}', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+})
+
+const MOVIE_IMAGES = Object.fromEntries(
+  Object.entries(movieImageFiles).map(([path, url]) => [
+    slugify(path.split('/').pop().replace(/\.[^.]+$/, '')),
+    url,
+  ]),
+)
+
+const movieImage = (movie) =>
+  movie.image || MOVIE_IMAGES[slugify(movie.file ?? movie.title)] || ''
+
+const GAMES_INTRO = [
+  'I am such a huge gamer, and gaming has been a part of my life since my childhood up to now.',
+  "Some games I finish in a weekend and never touch again. Others I keep going back to for years, and a few I still think about when I'm supposed to be working.",
+  'It even leaked into school. My 2nd-year pet store system has a Watch Dogs theme, ctOS and all.',
+  "Here are the six I'd pick if you made me choose.",
+]
+
 function Games() {
   return (
-    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {games.map((game, index) => (
-        <div
-          key={game.title + index}
-          className="reveal"
-          style={delay(220 + index * 90)}
-        >
-          <article className="group h-full overflow-hidden rounded-2xl border border-white/10 bg-white/4 transition-all duration-300 hover:-translate-y-1.5 hover:border-red-500/60 hover:bg-white/8">
-            {game.image ? (
-              <img
-                src={game.image}
-                alt={game.title}
-                className="aspect-video w-full object-cover"
-              />
-            ) : null}
-            <div className="p-6">
-              <span className="text-5xl font-extrabold text-white/15 transition-colors duration-300 group-hover:text-red-500/70">
-                {pad(index + 1)}
-              </span>
-              <h3 className="mt-3 text-xl font-semibold">{game.title}</h3>
-              <p className="mt-2 text-white/65">{game.note}</p>
-            </div>
-          </article>
-        </div>
-      ))}
-    </div>
+    <>
+      <div className="mb-10 flex max-w-3xl flex-col gap-4 border-l-2 border-[#d4621a] pl-6 text-lg leading-relaxed text-[#fef3e2]/75 sm:text-xl">
+        {GAMES_INTRO.map((paragraph, index) => (
+          <p
+            key={paragraph.slice(0, 24)}
+            className="reveal"
+            style={delay(180 + index * 120)}
+          >
+            {paragraph}
+          </p>
+        ))}
+      </div>
+
+      <ul className="flex flex-col gap-16 lg:gap-24">
+        {games.map((game, index) => (
+          <ShowcaseRow
+            key={game.title + index}
+            item={game}
+            index={index}
+            image={gameImage(game)}
+          />
+        ))}
+      </ul>
+    </>
+  )
+}
+
+function ScalesIcon({ className }) {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={className}
+    >
+      <path d="M32 12v44" />
+      <path d="M20 56h24" />
+      <circle cx="32" cy="9" r="3" />
+      <path d="M8 18h48" />
+      <path d="M10 18 3 38M10 18l7 20" />
+      <path d="M3 38h14c0 4-3 6.5-7 6.5S3 42 3 38Z" />
+      <path d="M54 18l-7 20M54 18l7 20" />
+      <path d="M47 38h14c0 4-3 6.5-7 6.5S47 42 47 38Z" />
+    </svg>
   )
 }
 
 function Dream() {
+  const story = Array.isArray(dream.story) ? dream.story : [dream.story]
+  const lead = story.slice(0, -1)
+  const closing = story[story.length - 1]
+  const roleStart = 800
+  const roleStep = 70
+  const roleEnd = roleStart + [...dream.role].length * roleStep
+
   return (
-    <div
-      className="reveal grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-16"
-      style={delay(220)}
-    >
-      <div>
-        <p className="text-sm tracking-[0.35em] text-white/50">
-          {dream.label.toUpperCase()}
-        </p>
-        <h3 className="mt-4 text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl">
-          {dream.role}
-        </h3>
+    <div className="grid gap-14 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-16">
+      <div className="relative">
+        <div
+          className="reveal-pop pointer-events-none absolute -left-4 top-1/2 size-[min(70vw,24rem)] -translate-y-1/2 text-[#f4ae52]/10 sm:-left-10"
+          style={delay(600)}
+          aria-hidden="true"
+        >
+          <ScalesIcon className="size-full" />
+        </div>
+
+        <div className="relative">
+          <p
+            className="reveal text-sm tracking-[0.35em] text-[#fef3e2]/50"
+            style={delay(450)}
+          >
+            {dream.label.toUpperCase()}
+          </p>
+          <h3
+            aria-label={dream.role}
+            className="mt-4 text-6xl font-extrabold leading-none tracking-tight sm:text-8xl"
+          >
+            {[...dream.role].map((char, index) =>
+              char === ' ' ? (
+                <span key={index} className="inline-block w-[0.3em]" aria-hidden="true" />
+              ) : (
+                <span
+                  key={index}
+                  className="reveal inline-block"
+                  style={delay(roleStart + index * roleStep)}
+                  aria-hidden="true"
+                >
+                  {char}
+                </span>
+              ),
+            )}
+          </h3>
+          {dream.nameplate ? (
+            <p
+              className="reveal mt-8 inline-flex rounded-md border border-[#f4ae52]/40 bg-linear-to-b from-[#f4ae52]/15 to-[#d4621a]/10 px-4 py-2 text-xs font-semibold tracking-[0.35em] text-[#f4ae52]"
+              style={delay(roleEnd + 250)}
+            >
+              {dream.nameplate}
+            </p>
+          ) : null}
+        </div>
       </div>
-      <p className="border-l-2 border-red-500 pl-6 text-lg leading-relaxed text-white/75 sm:text-xl">
-        {dream.story}
-      </p>
+
+      <div className="flex flex-col gap-5">
+        {lead.map((paragraph, index) => (
+          <p
+            key={paragraph.slice(0, 24)}
+            className="reveal text-lg leading-relaxed text-[#fef3e2]/70 sm:text-xl"
+            style={delay(900 + index * 150)}
+          >
+            {paragraph}
+          </p>
+        ))}
+        <blockquote
+          className="reveal mt-2 border-l-2 border-[#d4621a] pl-6 text-xl font-medium leading-relaxed text-[#fef3e2] sm:text-2xl"
+          style={delay(900 + lead.length * 150 + 150)}
+        >
+          {closing}
+        </blockquote>
+      </div>
     </div>
+  )
+}
+
+function ShowcaseRow({ item, index, image }) {
+  const [ref, inView] = useInView(0.15, '0px 0px -10% 0px', true)
+  const hasBody = Boolean(item.quote || item.note)
+
+  return (
+    <li
+      ref={ref}
+      className={`transition-all duration-1000 ease-out motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${inView ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}
+    >
+      <article className="group grid grid-cols-2 gap-x-4 gap-y-6 sm:gap-x-6 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-0">
+        <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-[#fef3e2]/10 bg-[#fef3e2]/4 transition-all duration-500 group-hover:-translate-y-1.5 group-hover:border-[#f4ae52]/60 group-hover:shadow-[0_22px_50px_-20px_rgba(212,98,26,0.55)] motion-reduce:transition-none lg:row-span-2">
+          {image ? (
+            <img
+              src={image}
+              alt={item.title}
+              loading="lazy"
+              className="size-full object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none"
+            />
+          ) : (
+            <span className="absolute bottom-5 left-6 text-5xl font-extrabold text-[#fef3e2]/15 transition-colors duration-300 group-hover:text-[#d4621a]">
+              {pad(index + 1)}
+            </span>
+          )}
+        </div>
+
+        <div className="flex flex-col justify-end gap-3 lg:col-span-2 lg:pb-6">
+          <span className="text-xs font-semibold tracking-[0.3em] text-[#f4ae52]">
+            {item.mention ? 'HONOURABLE MENTION' : pad(index + 1)}
+          </span>
+          <h3 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl lg:text-5xl">
+            {item.title}
+          </h3>
+          <span className="text-[#fef3e2]/45">{item.year}</span>
+        </div>
+
+        {hasBody ? (
+          <div className="col-span-2 flex flex-col gap-5 lg:col-span-2 lg:pt-6">
+            {item.quote ? (
+              <blockquote className="border-l-2 border-[#d4621a] pl-5 text-xl font-medium italic leading-relaxed sm:text-2xl">
+                &ldquo;{item.quote}&rdquo;
+                {item.quoteBy ? (
+                  <footer className="mt-2 text-sm not-italic tracking-wide text-[#fef3e2]/50">
+                    {item.quoteBy}
+                  </footer>
+                ) : null}
+              </blockquote>
+            ) : null}
+            {item.note ? (
+              <p className="text-lg leading-relaxed text-[#fef3e2]/70">{item.note}</p>
+            ) : null}
+          </div>
+        ) : null}
+      </article>
+    </li>
   )
 }
 
 function Movies() {
   return (
-    <ul className="flex flex-col">
+    <ul className="flex flex-col gap-16 lg:gap-24">
       {movies.map((movie, index) => (
-        <li
+        <ShowcaseRow
           key={movie.title + index}
-          className="reveal"
-          style={delay(220 + index * 90)}
-        >
-          <div className="group flex items-baseline gap-5 border-b border-white/10 px-2 py-5 transition-colors duration-300 hover:bg-white/5 sm:gap-8">
-            <span className="w-8 shrink-0 text-2xl font-bold text-red-500/80">
-              {pad(index + 1)}
-            </span>
-            <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-6">
-              <h3 className="text-xl font-semibold transition-transform duration-300 group-hover:translate-x-1">
-                {movie.title}
-              </h3>
-              <span className="text-white/45">{movie.year}</span>
-              <p className="text-white/65 sm:ml-auto sm:text-right">{movie.note}</p>
-            </div>
-          </div>
-        </li>
+          item={movie}
+          index={index}
+          image={movieImage(movie)}
+        />
       ))}
     </ul>
   )
@@ -680,7 +858,7 @@ function BondActors() {
   return (
     <>
       <p
-        className="reveal mb-8 border-l-2 border-red-500 pl-6 text-lg leading-relaxed text-white/75 sm:text-xl"
+        className="reveal mb-8 border-l-2 border-[#d4621a] pl-6 text-lg leading-relaxed text-[#fef3e2]/75 sm:text-xl"
         style={delay(180)}
       >
         {bondIntro}
@@ -699,16 +877,16 @@ function BondActorsList() {
           className="reveal"
           style={delay(220 + index * 90)}
         >
-          <div className="group flex items-baseline gap-5 border-b border-white/10 px-2 py-5 transition-colors duration-300 hover:bg-white/5 sm:gap-8">
-            <span className="w-8 shrink-0 text-2xl font-bold text-red-500/80">
+          <div className="group flex items-baseline gap-5 border-b border-[#fef3e2]/10 px-2 py-5 transition-colors duration-300 hover:bg-[#fef3e2]/5 sm:gap-8">
+            <span className="w-8 shrink-0 text-2xl font-bold text-[#f4ae52]/80">
               {pad(index + 1)}
             </span>
             <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-6">
               <h3 className="text-xl font-semibold transition-transform duration-300 group-hover:translate-x-1">
                 {actor.name}
               </h3>
-              <span className="text-white/45">{actor.years}</span>
-              <p className="text-white/65 sm:ml-auto sm:text-right">{actor.note}</p>
+              <span className="text-[#fef3e2]/45">{actor.years}</span>
+              <p className="text-[#fef3e2]/65 sm:ml-auto sm:text-right">{actor.note}</p>
             </div>
           </div>
         </li>
@@ -726,17 +904,17 @@ function BondFilms() {
           className="reveal"
           style={delay(220 + index * 90)}
         >
-          <div className="group flex items-baseline gap-5 border-b border-white/10 px-2 py-5 transition-colors duration-300 hover:bg-white/5 sm:gap-8">
-            <span className="w-8 shrink-0 text-2xl font-bold text-red-500/80">
+          <div className="group flex items-baseline gap-5 border-b border-[#fef3e2]/10 px-2 py-5 transition-colors duration-300 hover:bg-[#fef3e2]/5 sm:gap-8">
+            <span className="w-8 shrink-0 text-2xl font-bold text-[#f4ae52]/80">
               {pad(index + 1)}
             </span>
             <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-6">
               <h3 className="text-xl font-semibold transition-transform duration-300 group-hover:translate-x-1">
                 {film.title}
               </h3>
-              <span className="text-white/45">{film.year}</span>
-              <span className="text-white/45">{film.actor}</span>
-              <p className="text-white/65 sm:ml-auto sm:text-right">{film.note}</p>
+              <span className="text-[#fef3e2]/45">{film.year}</span>
+              <span className="text-[#fef3e2]/45">{film.actor}</span>
+              <p className="text-[#fef3e2]/65 sm:ml-auto sm:text-right">{film.note}</p>
             </div>
           </div>
         </li>
@@ -754,7 +932,7 @@ function Hobbies() {
           className="reveal"
           style={delay(220 + index * 70)}
         >
-          <span className="block cursor-default rounded-full border border-white/25 px-6 py-2.5 text-lg transition-all duration-300 hover:-translate-y-1 hover:border-red-500 hover:bg-red-500/15">
+          <span className="block cursor-default rounded-full border border-[#fef3e2]/25 px-6 py-2.5 text-lg transition-all duration-300 hover:-translate-y-1 hover:border-[#f4ae52] hover:bg-[#d4621a]/20">
             {hobby}
           </span>
         </li>
@@ -772,10 +950,10 @@ function Passions() {
           className="reveal"
           style={delay(220 + index * 120)}
         >
-          <article className="h-full rounded-2xl border border-white/10 bg-linear-to-b from-white/6 to-transparent p-7 transition-all duration-300 hover:-translate-y-1.5 hover:border-red-500/60">
-            <div className="mb-5 h-0.5 w-10 bg-red-500" />
+          <article className="h-full rounded-2xl border border-[#fef3e2]/10 bg-linear-to-b from-[#fef3e2]/6 to-transparent p-7 transition-all duration-300 hover:-translate-y-1.5 hover:border-[#f4ae52]/60">
+            <div className="mb-5 h-0.5 w-10 bg-[#d4621a]" />
             <h3 className="text-2xl font-bold">{passion.title}</h3>
-            <p className="mt-3 text-white/65">{passion.description}</p>
+            <p className="mt-3 text-[#fef3e2]/65">{passion.description}</p>
           </article>
         </div>
       ))}
@@ -783,43 +961,70 @@ function Passions() {
   )
 }
 
+function Record() {
+  return (
+    <div
+      className="reveal-pop relative mx-auto aspect-square w-[min(78vw,30rem)] shrink-0 lg:mx-0 lg:w-[min(42vw,36rem)] lg:translate-x-[12%]"
+      style={delay(500)}
+      aria-hidden="true"
+    >
+      <div className="relative size-full rounded-full bg-[image:repeating-radial-gradient(circle_at_center,#150d07_0,#150d07_2px,#22160c_2px,#22160c_4px)] shadow-[0_2vw_5vw_rgba(0,0,0,0.55)] ring-1 ring-[#fef3e2]/10 motion-safe:animate-[spin_36s_linear_infinite]">
+        <span className="absolute inset-0 rounded-full bg-[image:conic-gradient(from_0deg,transparent_0deg,rgba(254,243,226,0.16)_38deg,transparent_86deg,transparent_180deg,rgba(254,243,226,0.1)_218deg,transparent_266deg)]" />
+        <span className="absolute inset-[7%] rounded-full ring-1 ring-[#fef3e2]/5" />
+        <span className="absolute inset-[18%] rounded-full ring-1 ring-[#fef3e2]/5" />
+        <div className="absolute inset-[33%] flex items-center justify-center rounded-full bg-[image:linear-gradient(135deg,#f4ae52,#d4621a)] p-[6%] shadow-[inset_0_0_0_2px_rgba(42,26,14,0.25)]">
+          <span className="text-center text-[clamp(0.5rem,1.1vw,0.95rem)] font-bold leading-snug tracking-[0.3em] text-[#2a1a0e]">
+            {profile.eyebrow}
+          </span>
+        </div>
+        <span className="absolute inset-[48.5%] rounded-full bg-[#2a1a0e]" />
+      </div>
+    </div>
+  )
+}
+
 function Dossier({ armed, onReplay }) {
   return (
-    <div className="secret-content relative overflow-hidden bg-black text-white">
-      <div className="secret-glow" aria-hidden="true" />
+    <div className="secret-content relative overflow-hidden bg-[#2a1a0e] text-[#fef3e2]">
+      <div className="pointer-events-none absolute inset-0 bg-[image:radial-gradient(ellipse_60%_24%_at_50%_0%,rgba(212,98,26,0.34),transparent_70%),radial-gradient(ellipse_45%_18%_at_0%_45%,rgba(244,174,82,0.12),transparent_70%),radial-gradient(ellipse_45%_18%_at_100%_75%,rgba(212,98,26,0.2),transparent_70%)]" aria-hidden="true" />
 
       <main className="relative mx-auto flex w-full max-w-6xl flex-col gap-24 px-6 pb-24 sm:px-10 lg:gap-32">
         <header
-          className={`flex min-h-[85vh] flex-col items-center justify-center gap-6 pt-16 text-center ${armed ? 'about-in' : ''}`}
+          className={`relative flex min-h-[90vh] flex-col justify-center gap-12 pt-24 lg:flex-row lg:items-center lg:justify-between lg:gap-8 ${armed ? 'about-in' : ''}`}
         >
-          <p
-            className="reveal text-sm font-semibold tracking-[0.55em] text-red-500"
-            style={delay(0)}
-          >
-            {profile.eyebrow}
-          </p>
-          <h1
-            className="reveal font-display text-5xl tracking-wide sm:text-7xl"
-            style={delay(150)}
-          >
-            {profile.title}
-          </h1>
-          <p
-            className="reveal max-w-xl text-lg text-white/70"
-            style={delay(300)}
-          >
-            {profile.intro}
-          </p>
-          <div
-            className="reveal-line mt-2 h-px w-44 bg-linear-to-r from-transparent via-red-500 to-transparent"
-            style={{ ...delay(450), transformOrigin: 'center' }}
-          />
-          <span
-            className="reveal mt-6 text-xs tracking-[0.5em] text-white/40"
-            style={delay(700)}
-          >
-            SCROLL
-          </span>
+          <div className="relative z-10 flex max-w-xl flex-col gap-6">
+            <p
+              className="reveal flex items-center gap-4 text-sm font-semibold tracking-[0.5em] text-[#f4ae52]"
+              style={delay(0)}
+            >
+              <span className="h-px w-10 bg-[#f4ae52]" aria-hidden="true" />
+              {profile.eyebrow}
+            </p>
+            <h1
+              className="reveal font-display text-6xl leading-[0.95] tracking-wide sm:text-8xl"
+              style={delay(150)}
+            >
+              {profile.title}
+            </h1>
+            <p
+              className="reveal text-lg leading-relaxed text-[#fef3e2]/75 sm:text-xl"
+              style={delay(300)}
+            >
+              {profile.intro}
+            </p>
+            <div
+              className="reveal mt-4 flex items-center gap-4 text-xs tracking-[0.5em] text-[#fef3e2]/50"
+              style={delay(650)}
+            >
+              <span
+                className="h-12 w-px bg-linear-to-b from-[#f4ae52] to-transparent motion-safe:animate-pulse"
+                aria-hidden="true"
+              />
+              SCROLL DOWN FOR MORE
+            </div>
+          </div>
+
+          <Record />
         </header>
 
         <FileSection index={1} title="Favorite Games of All Time">
@@ -853,14 +1058,14 @@ function Dossier({ armed, onReplay }) {
         <footer className="flex flex-wrap justify-center gap-4 pt-8">
           <a
             href="/"
-            className="rounded-full border border-white/30 px-6 py-2.5 text-sm tracking-widest transition-colors hover:bg-white hover:text-black"
+            className="rounded-full border border-[#fef3e2]/30 px-6 py-2.5 text-sm tracking-widest transition-colors hover:bg-[#fef3e2] hover:text-[#2a1a0e]"
           >
             BACK TO PORTFOLIO
           </a>
           <button
             type="button"
             onClick={onReplay}
-            className="cursor-pointer rounded-full border border-red-500/60 px-6 py-2.5 text-sm tracking-widest text-red-400 transition-colors hover:bg-red-500 hover:text-white"
+            className="cursor-pointer rounded-full border border-[#d4621a]/60 px-6 py-2.5 text-sm tracking-widest text-[#f4ae52] transition-colors hover:bg-[#d4621a] hover:text-[#fef3e2]"
           >
             REPLAY INTRO
           </button>
@@ -1011,7 +1216,7 @@ export default function Secret() {
   useEffect(() => {
     if (phase !== 'intro' || !started) return undefined
 
-    const hit = Math.max(track?.hit ?? DEFAULT_HIT, MIN_HIT)
+    const hit = bloodStartSeconds(track)
     const armTimer = setTimeout(() => setArmed(true), (hit + ARM_LAG) * 1000)
     const doneTimer = setTimeout(finish, (hit + TOTAL_LAG) * 1000)
 
@@ -1061,7 +1266,6 @@ export default function Secret() {
   }
 
   const playing = phase === 'intro' && started
-  const hit = Math.max(track?.hit ?? DEFAULT_HIT, MIN_HIT)
   const timeline = {
     '--choreo': `${CHOREO_SECONDS}s`,
     '--stop': `${RIGHT_STOP_VW}vw`,
@@ -1072,15 +1276,13 @@ export default function Secret() {
     '--open': DOT_SCALE,
     '--end-x': BARREL_IMAGE ? `${BARREL_IMAGE_FOCUS_X * 100}vw` : '50vw',
     '--end-pct': BARREL_IMAGE ? `${BARREL_IMAGE_FOCUS_X * 100}%` : '50%',
-    ...(hit
-      ? {
-          '--t0': `calc(${hit}s - var(--sweep) - var(--open-dur) - var(--pause) - var(--glide-dur) - var(--hold))`,
-        }
-      : {}),
+    '--t0': track?.hit
+      ? `max(0s, calc(${track.hit}s - var(--sweep) - var(--open-dur) - var(--pause) - var(--glide-dur) - var(--hold)))`
+      : `${AUDIO_LEAD_SECONDS}s`,
   }
 
   return (
-    <div className="secret-page min-h-screen bg-black" style={timeline}>
+    <div className="secret-page min-h-screen bg-[#2a1a0e]" style={timeline}>
       <div className={playing ? 'secret-iris' : ''}>
         <Dossier armed={armed} onReplay={replay} />
       </div>
