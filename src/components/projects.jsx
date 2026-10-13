@@ -1,6 +1,7 @@
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { useInView, useScrollVars } from '../hooks/scroll'
 import { groups } from '../data/projects'
+import ProjectModal, { LiveDot } from './project_modal'
 import './section_transition.css'
 
 const delay = (ms) => ({ '--d': ms })
@@ -65,15 +66,6 @@ const groupIcons = {
   personal: NoteIcon,
 }
 
-function LiveDot() {
-  return (
-    <span className="relative inline-flex size-[0.55em]" aria-hidden="true">
-      <span className="absolute inset-0 rounded-full bg-[#a9a2ff] opacity-70 motion-safe:animate-ping" />
-      <span className="relative size-full rounded-full bg-[#a9a2ff]" />
-    </span>
-  )
-}
-
 function TechIcon({ tech }) {
   const [failed, setFailed] = useState(!tech.src)
 
@@ -129,18 +121,33 @@ function FooterLink({ label, href }) {
   )
 }
 
+function MoreButton({ onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-haspopup="dialog"
+      className={`${linkBase} cursor-pointer hover:text-[#a9a2ff] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#a9a2ff]`}
+    >
+      View More
+    </button>
+  )
+}
+
 function ProjectCard({ project, baseDelay }) {
-  const { title, period, stack, description, members, more, link } = project
+  const { title, period, stack, description, members, more } = project
+  const [open, setOpen] = useState(false)
+  const close = useCallback(() => setOpen(false), [])
+  const articleRef = useRef(null)
   const isLive = period.endsWith('Present')
   const hasMore = Boolean(more) || showPlaceholders
-  const hasLink = Boolean(link) && (Boolean(link.href) || showPlaceholders)
 
   return (
     <li
       className="reveal min-h-[28rem] shrink-0 basis-[85%] snap-start sm:basis-[calc((100%_-_var(--gap))/2)] lg:min-h-0 lg:aspect-[550/580] lg:basis-[calc((100%_-_2*var(--gap))/3)]"
       style={delay(baseDelay)}
     >
-      <article className="relative isolate flex h-full flex-col gap-[clamp(0.75rem,0.85vw,1.1rem)] rounded-[20px] border border-white/20 bg-[image:linear-gradient(135deg,rgba(255,255,255,0.05),rgba(15,23,42,0.05))] p-[clamp(1rem,1.6vw,2rem)] shadow-[0_4px_40px_rgba(0,0,0,0.25)] transition-all duration-500 before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:rounded-[inherit] before:bg-[image:radial-gradient(ellipse_80%_55%_at_50%_0%,rgba(96,128,255,0.2),transparent_70%)] before:opacity-0 before:transition-opacity before:duration-500 hover:-translate-y-1.5 hover:border-[rgba(140,165,255,0.5)] hover:shadow-[0_4px_40px_rgba(0,0,0,0.25),0_0_24px_rgba(96,128,255,0.3),0_0_48px_rgba(70,95,230,0.2)] hover:before:opacity-100 focus-within:border-[rgba(140,165,255,0.5)] focus-within:shadow-[0_4px_40px_rgba(0,0,0,0.25),0_0_24px_rgba(96,128,255,0.3),0_0_48px_rgba(70,95,230,0.2)] focus-within:before:opacity-100 motion-reduce:transition-none motion-reduce:before:transition-none">
+      <article ref={articleRef} className="relative isolate flex h-full flex-col gap-[clamp(0.75rem,0.85vw,1.1rem)] rounded-[20px] border border-white/20 bg-[image:linear-gradient(135deg,rgba(255,255,255,0.05),rgba(15,23,42,0.05))] p-[clamp(1rem,1.6vw,2rem)] shadow-[0_4px_40px_rgba(0,0,0,0.25)] transition-all duration-500 before:pointer-events-none before:absolute before:inset-0 before:-z-10 before:rounded-[inherit] before:bg-[image:radial-gradient(ellipse_80%_55%_at_50%_0%,rgba(96,128,255,0.2),transparent_70%)] before:opacity-0 before:transition-opacity before:duration-500 hover:-translate-y-1.5 hover:border-[rgba(140,165,255,0.5)] hover:shadow-[0_4px_40px_rgba(0,0,0,0.25),0_0_24px_rgba(96,128,255,0.3),0_0_48px_rgba(70,95,230,0.2)] hover:before:opacity-100 focus-within:border-[rgba(140,165,255,0.5)] focus-within:shadow-[0_4px_40px_rgba(0,0,0,0.25),0_0_24px_rgba(96,128,255,0.3),0_0_48px_rgba(70,95,230,0.2)] focus-within:before:opacity-100 motion-reduce:transition-none motion-reduce:before:transition-none">
         <header className="flex flex-col gap-[0.4em]">
           <h4 className="text-[clamp(1rem,1.25vw,1.6rem)] font-bold leading-snug">
             {title}
@@ -151,17 +158,19 @@ function ProjectCard({ project, baseDelay }) {
           </p>
         </header>
 
-        <ul className="flex flex-wrap items-center gap-[clamp(0.5rem,1vw,1.25rem)]">
-          {stack.map((tech, index) => (
-            <li
-              key={tech.label}
-              className="reveal-pop size-[clamp(1.5rem,1.9vw,2.4rem)] shrink-0"
-              style={delay(baseDelay + 250 + index * 70)}
-            >
-              <TechIcon key={tech.src || 'none'} tech={tech} />
-            </li>
-          ))}
-        </ul>
+        {stack.length ? (
+          <ul className="flex flex-wrap items-center gap-[clamp(0.5rem,1vw,1.25rem)]">
+            {stack.map((tech, index) => (
+              <li
+                key={tech.label}
+                className="reveal-pop size-[clamp(1.5rem,1.9vw,2.4rem)] shrink-0"
+                style={delay(baseDelay + 250 + index * 70)}
+              >
+                <TechIcon key={tech.src || 'none'} tech={tech} />
+              </li>
+            ))}
+          </ul>
+        ) : null}
 
         <p className="text-left text-[clamp(0.75rem,0.9vw,1.1rem)] leading-relaxed text-white/85">
           {description}
@@ -170,25 +179,31 @@ function ProjectCard({ project, baseDelay }) {
         {members ? (
           <div className="flex flex-col gap-[0.4em] text-[clamp(0.72rem,0.8vw,1rem)]">
             <p className="font-semibold">Group Members:</p>
-            <ul className="list-disc pl-5 leading-snug text-white/80">
+            <ul
+              className={`list-disc pl-5 leading-snug text-white/80 ${members.length > 2 ? 'columns-2 gap-x-6' : ''}`}
+            >
               {members.map((member) => (
-                <li key={member}>{member}</li>
+                <li key={member.name} className="break-inside-avoid">
+                  {member.name}
+                  {member.leader ? ' (Leader)' : ''}
+                </li>
               ))}
             </ul>
           </div>
         ) : null}
 
-        {hasMore || hasLink ? (
-          <footer className="mt-auto flex items-center justify-between border-t border-white/12 pt-[clamp(0.6rem,0.9vw,1rem)] text-[clamp(0.7rem,0.8vw,1rem)]">
-            {hasMore ? <FooterLink label="View More" href={more} /> : null}
-            {hasLink ? (
-              <span className="ml-auto">
-                <FooterLink label={link.label} href={link.href} />
-              </span>
-            ) : null}
+        {hasMore ? (
+          <footer className="mt-auto flex items-center border-t border-white/12 pt-[clamp(0.6rem,0.9vw,1rem)] text-[clamp(0.7rem,0.8vw,1rem)]">
+            {more ? (
+              <MoreButton onClick={() => setOpen(true)} />
+            ) : (
+              <FooterLink label="View More" href="" />
+            )}
           </footer>
         ) : null}
       </article>
+
+      {open ? <ProjectModal project={project} originRef={articleRef} onClose={close} /> : null}
     </li>
   )
 }

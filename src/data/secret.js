@@ -37,16 +37,16 @@ export const games = [
   { title: 'Kingdom Come: Deliverance', 
     year: '2018', 
     file: 'kcd', 
-    quote: '', 
-    quoteBy: '', 
-    note: '' },
+    quote: "I'm Feeling Quite Hungry", 
+    quoteBy: 'Henry of Skalitz', 
+    note: "Probably one of the most entertaining game I've played on 2026, and I just love how the story of this game is tied to an actual history of Bohemia, so it's both a mixture of history and fiction. I love the plot twists and the way the game handles the historical context. It may not be as immersive as RDR2, but the storytelling is exceptional. Looking forward to play the 2nd one since as of this writing I haven't finished this game yet, but I love it so much already." },
 
   { title: 'Stardew Valley', 
     year: '2016', 
     file: 'stardew', 
-    quote: '', 
-    quoteBy: '', 
-    note: '' },
+    quote: "", 
+    quoteBy: "", 
+    note: "The most coziest game I've ever played. Nothing much to say except that I didnt know I will spend so much of my free time playing this game and being so satisfied with it. I honestly havent beaten the game yet but I re-played this game so many times in just a span of 2 years as of this writing." },
 ]
 
 export const dream = {
@@ -62,10 +62,15 @@ export const dream = {
 
 export const movies = [
   { title: 'Full Metal Jacket', year: '1987', file: 'fullmetal', quote: '', quoteBy: '', note: '' },
+
   { title: 'Hacksaw Ridge', year: '2016', file: 'hacksaw', quote: '', quoteBy: '', note: '' },
+
   { title: 'From Russia with Love', year: '1963', file: 'frwl', quote: '', quoteBy: '', note: '' },
+
   { title: 'WALL-E', year: '2008', file: 'walle', quote: '', quoteBy: '', note: '' },
+
   { title: 'Flags of Our Fathers', year: '2006', file: 'flags', quote: '', quoteBy: '', note: '' },
+  
   { title: 'Green Book', year: '2018', file: 'greenbook', mention: true, quote: '', quoteBy: '', note: '' },
 ]
 

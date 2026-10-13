@@ -25,7 +25,7 @@ const TRAILS = Array.from({ length: TRAIL_COUNT }, (_, index) => index + 1)
 const AUDIO_VOLUME = 0.5
 
 const TRACK_VOLUMES = {
-  yolt: 1,
+  yolt: 1.5,
 }
 
 const trackVolume = (track) => {
