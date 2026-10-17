@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useInView, useScrollVars } from '../hooks/scroll'
 import { groups } from '../data/projects'
 import ProjectModal, { LiveDot } from './project_modal'
@@ -208,9 +208,73 @@ function ProjectCard({ project, baseDelay }) {
   )
 }
 
+function ChevronIcon({ className = '' }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className={`size-5 ${className}`}
+    >
+      <path d="m9 6 6 6-6 6" />
+    </svg>
+  )
+}
+
+const arrowButton =
+  'flex size-11 cursor-pointer items-center justify-center rounded-full border border-white/20 bg-[image:linear-gradient(135deg,rgba(255,255,255,0.08),rgba(15,23,42,0.1))] text-white shadow-[0_4px_40px_rgba(0,0,0,0.25)] backdrop-blur-md transition-all duration-300 enabled:hover:-translate-y-0.5 enabled:hover:border-[rgba(140,165,255,0.5)] enabled:hover:text-[#a9a2ff] enabled:hover:shadow-[0_4px_40px_rgba(0,0,0,0.25),0_0_24px_rgba(96,128,255,0.3),0_0_48px_rgba(70,95,230,0.2)] disabled:cursor-default disabled:opacity-30 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#a9a2ff] motion-reduce:transition-none'
+
 function Group({ group }) {
   const headingId = `proj-${group.id}`
   const Icon = groupIcons[group.id] ?? CapIcon
+  const trackRef = useRef(null)
+  const [edges, setEdges] = useState({ prev: false, next: false })
+
+  useEffect(() => {
+    const track = trackRef.current
+    if (!track) return undefined
+
+    const update = () => {
+      const max = track.scrollWidth - track.clientWidth
+      const prev = track.scrollLeft > 2
+      const next = track.scrollLeft < max - 2
+
+      setEdges((current) =>
+        current.prev === prev && current.next === next ? current : { prev, next },
+      )
+    }
+
+    update()
+    track.addEventListener('scroll', update, { passive: true })
+
+    const observer = new ResizeObserver(update)
+    observer.observe(track)
+
+    return () => {
+      track.removeEventListener('scroll', update)
+      observer.disconnect()
+    }
+  }, [])
+
+  const scrollByCard = (direction) => {
+    const track = trackRef.current
+    const card = track?.firstElementChild
+    if (!track || !card) return
+
+    const gap = parseFloat(getComputedStyle(track).columnGap) || 0
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    track.scrollBy({
+      left: direction * (card.getBoundingClientRect().width + gap),
+      behavior: reduced ? 'auto' : 'smooth',
+    })
+  }
+
+  const overflowing = edges.prev || edges.next
 
   return (
     <Reveal>
@@ -218,19 +282,45 @@ function Group({ group }) {
         aria-labelledby={headingId}
         className="flex flex-col gap-[clamp(1rem,1.6vw,1.75rem)]"
       >
-        <h3
-          id={headingId}
-          className="reveal flex items-center gap-3 text-[clamp(1.1rem,1.3vw,1.6rem)] font-semibold"
-          style={delay(0)}
-        >
-          <Icon />
-          {group.title}
-        </h3>
+        <div className="flex items-center justify-between gap-4">
+          <h3
+            id={headingId}
+            className="reveal flex items-center gap-3 text-[clamp(1.1rem,1.3vw,1.6rem)] font-semibold"
+            style={delay(0)}
+          >
+            <Icon />
+            {group.title}
+          </h3>
+
+          {overflowing ? (
+            <div className="reveal flex items-center gap-3" style={delay(120)}>
+              <button
+                type="button"
+                onClick={() => scrollByCard(-1)}
+                disabled={!edges.prev}
+                aria-label={`Scroll ${group.title} left`}
+                className={arrowButton}
+              >
+                <ChevronIcon className="rotate-180" />
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollByCard(1)}
+                disabled={!edges.next}
+                aria-label={`Scroll ${group.title} right`}
+                className={arrowButton}
+              >
+                <ChevronIcon />
+              </button>
+            </div>
+          ) : null}
+        </div>
 
         <ul
+          ref={trackRef}
           tabIndex={0}
           aria-label={`${group.title} list`}
-          className="-mx-6 -my-12 flex snap-x snap-mandatory scroll-px-6 gap-[var(--gap)] overflow-x-auto overflow-y-hidden px-6 py-12 [--gap:clamp(1rem,3.85vw,4.625rem)] [scrollbar-color:rgba(255,255,255,0.25)_transparent] [scrollbar-width:thin] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#a9a2ff] sm:-mx-10 sm:scroll-px-10 sm:px-10 lg:-mx-[min(3.23vw,62px)] lg:scroll-px-[min(3.23vw,62px)] lg:px-[min(3.23vw,62px)]"
+          className="-mx-6 -my-12 flex snap-x snap-mandatory scroll-px-6 gap-[var(--gap)] overflow-x-auto overflow-y-hidden px-6 py-12 [--gap:clamp(1rem,3.85vw,4.625rem)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#a9a2ff] sm:-mx-10 sm:scroll-px-10 sm:px-10 lg:-mx-[min(3.23vw,62px)] lg:scroll-px-[min(3.23vw,62px)] lg:px-[min(3.23vw,62px)]"
         >
           {group.projects.map((project, index) => (
             <ProjectCard

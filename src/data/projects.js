@@ -66,6 +66,9 @@ const vb = { ...tech('Visual Basic', 'visualbasic'), chip: true }
 const database = tech('Database', 'database')
 const fastapi = tech('FastAPI', 'fastapi')
 const docker = tech('Docker', 'docker')
+const qgis = tech('QGIS', 'qgis')
+const pyqt = tech('PyQt5', 'pyqt')
+const qtdesigner = tech('Qt Designer', 'qtdesigner')
 const cpp = {
   label: 'C++',
   src: findSvg('cplusplus') || findSvg('cpp') || c.src,
@@ -258,8 +261,6 @@ export const groups = [
             'Responsive interface built from Figma mockups',
             'Account data fetched, displayed, and updated through an Express.js backend using React hooks',
           ],
-          outcome:
-            'My first web application, built with two fellow interns whom I led. The source code stayed with the company after the internship.',
           challenges: [
             {
               challenge:
@@ -308,8 +309,6 @@ export const groups = [
             'An Import Tool for uploading shapefiles, GeoPackages, and ZIP files into the assigned database',
             'A Data Manager for browsing, searching, and exporting spatial tables, with a Map Viewer to preview them on a street or satellite map',
           ],
-          outcome:
-            'It is still in active development. The app now has a modernized interface and can be set up for different provinces and LGUs.',
           challenges: [
             {
               challenge:
@@ -336,23 +335,150 @@ export const groups = [
         id: 'cama-ai-tools',
         title: 'AI Tools - Computer Assisted Mass Appraisal',
         period: 'March 4, 2024 - April 30, 2024',
-        stack: [react, tailwind, postgres, python, docker],
+        stack: [react, python, fastapi, postgres, docker, css],
         description:
-          'A mostly solo-developed AI module built for Computer Assisted Mass Appraisal (CAMA) to auto-appraise land parcels that lack unit values. Using React and Python ML models (XGBoost, Random Forest, Linear Regression), the tool calculates land predictions, visualizes residual errors via charts and map overlays, and exports updated GIS Shapefiles and PDF evaluation reports. Fully Dockerized for VM deployment.',
+          'A mostly solo-developed AI module for Computer Assisted Mass Appraisal (CAMA) that predicts land values for parcels that lack unit values. It trains XGBoost, Random Forest, and Linear Regression models, shows the results in charts and on the map, and exports shapefiles and PDF reports. It started inside the BLGF GIS web app and now runs as a standalone app that the web app opens through a token. Fully Dockerized for VM deployment.',
         members: null,
         more: {
-          gallery: shots('cama-ai-tools'),
-          captions: [],
+          gallery: shots('cama-ai-tools', 20),
+          captions: [
+            'First version, inside the BLGF GIS web app. The Train tab, where you choose between an uploaded shapefile or a database training table, pick the value to predict and its factors, select the models, and preview the data.',
+            'First version. The Results tab for Linear Regression, with downloads for the model, the PDF report, the shapefile, and the CSV, buttons to show the results on the map or save them to the database, and the performance metrics. The map panel on the left colors every parcel by its predicted value.',
+            'First version. Hovering over a parcel shows its actual value, its predicted value, and the residual, with a note that this one was a good prediction.',
+            'First version. Another parcel, this time under-predicted. The popup shows the actual value, the predicted value, and how far off the prediction was.',
+            'First version. The metrics, the feature importance as a table and a chart, and the start of the coefficients analysis with its t-tests.',
+            'First version. The rest of the coefficients analysis, the residual t-test, and a preview of the training results table.',
+            'First version. The Plots page, where the actual and predicted values are compared against a reference line.',
+            'First version. The residual distribution, a histogram of how far the predictions were from the actual values.',
+            'First version. The Distributions page, with a histogram for each variable and its mean, median, standard deviation, and number of samples.',
+            'First version. More variable distributions, one chart for each factor used in the model.',
+            'First version. The Run Saved tab, where a saved model is chosen or uploaded and run on a database table or on uploaded files.',
+            "Standalone version, opened from the BLGF GIS web app through the user's token. The Train tab shows the connection to the user's municipality, the model choices, the training table, the target, and the factors.",
+            'Standalone version. The data preview, where each row has a tick box to leave it out, with page-by-page navigation and the Train Selected Models button.',
+            'Standalone version. The Results tab for Linear Regression, with links to download the model, the PDF report, the shapefile, and the CSV.',
+            'Standalone version. The performance metrics and the feature importance, as a table and as a chart.',
+            'Standalone version. The coefficients analysis with its t-tests, and a preview of the predictions next to each parcel PIN.',
+            'Standalone version. The actual versus predicted plot.',
+            'Standalone version. The residual distribution.',
+            'Standalone version. The distributions of the variables used in the model, each with its mean, median, standard deviation, and number of samples.',
+            'Standalone version. More variable distributions.',
+          ],
           documentation: docs('cama-ai-tools'),
           features: [
-            'Auto-appraisal of land parcels that lack unit values',
-            'Land value predictions using XGBoost, Random Forest, and Linear Regression',
-            'Residual error visualization through charts and map overlays',
-            'Export of updated GIS Shapefiles and PDF evaluation reports',
-            'Dockerized for VM deployment',
+            'Train three kinds of models side by side, Linear Regression, Random Forest, and XGBoost, then compare how each one performs',
+            'Pick a training table from the database or upload a shapefile or ZIP, choose the value to predict and the factors that affect it, and preview the data page by page before training',
+            'Leave out individual rows, like outliers, with a simple tick box before training',
+            'Clear performance numbers (R², RMSE, and MAE), with charts for feature importance, actual versus predicted values, the residuals, and the distribution of every variable',
+            'For Linear Regression, a full coefficients analysis with t-tests and p-values',
+            'A map view that colors every parcel by its predicted value, with a legend, summary statistics, and a switch between actual and predicted values',
+            'Hover over a parcel to see its actual value, its predicted value, and the residual, with a note on how good the prediction was',
+            'A multi-page PDF report for every model that explains the results in plain language',
+            'Predictions exported as a shapefile and a CSV, with the trained model saved as a file so it can be used again',
+            'Trained models saved automatically to the database, so they can be run again later',
+            'Run Saved Model: use a saved model, from the database or an uploaded file, on a table or on shapefiles, and get predictions, a report, and a shapefile',
+            'Write the predictions back into the table by PIN',
+            "Runs as a standalone app that the GIS web app opens with the user's token, which connects it to the right municipality data",
           ],
-          outcome: '',
-          challenges: [],
+          contributions: [
+            'Built the module from end to end: the React interface, the FastAPI backend, and the Docker setup for deployment.',
+            'Wrote the training pipeline for the three models, from reading the data and cleaning it, to splitting it for testing, to measuring how well each model predicts.',
+            'Built the PDF report generator, which turns the metrics and charts into pages with explanations that non-technical users can follow.',
+            'Built the map view that colors parcels by predicted value, with the hover details for each parcel.',
+            'Built the Run Saved Model flow, which loads a saved model, predicts on new data, and can write the predictions back to the table by PIN.',
+            'Connected everything to PostGIS: reading training tables, joining attributes with their spatial tables, and saving trained models and predictions.',
+            'Moved the module out of the BLGF GIS web app into a standalone app that the web app opens through a token, so it can be updated and deployed on its own.',
+          ],
+          challenges: [
+            {
+              challenge:
+                'Keeping every prediction tied to the right parcel. Rows get excluded or dropped along the way, so the predictions no longer line up with the original table.',
+              learning:
+                'I learned to carry the original row index and the PIN through the whole pipeline, so every prediction can be matched back to the right parcel on the map and in the database.',
+            },
+            {
+              challenge:
+                'Making the results understandable for non-technical users, since numbers like R² and RMSE mean little to most people.',
+              learning:
+                'I learned to turn the numbers into plain-language explanations, in the charts and in the PDF report.',
+            },
+            {
+              challenge:
+                'Supporting both database tables and uploaded files as data sources, when the tables do not always carry the parcel shapes.',
+              learning:
+                'I learned how to join attribute tables with their spatial tables in PostGIS, and how to read shapefiles and ZIP files safely.',
+            },
+            {
+              challenge:
+                'Moving the module out of the web app so it works on its own, while still knowing who the user is and which municipality they are allowed to use.',
+              learning:
+                "I learned how to pass identity and access between apps with tokens, and how to keep each user limited to their own municipality's data.",
+            },
+          ],
+        },
+      },
+      {
+        id: 'igeosys-lgu-suite',
+        title: 'iGeosys LGU Suite',
+        period: 'March 2026 - Present',
+        stack: [python, pyqt, qgis, postgres],
+        description:
+          'A GIS desktop application based on QGIS, rebranded into our very own at Integrated Geosys Development Inc., with unique features made for Local Government Units. It is still in development, and I work on its forms, layer tools, and installer.',
+        members: null,
+        more: {
+          gallery: shots('igeosys-lgu-suite', 8),
+          captions: [
+            'The main window of iGeosys LGU Suite, with a land parcel layer loaded and the Forms Toolbar open to the two DCS forms, Residential and Commercial or Industrial. The Tax Mapping System panel on the right holds the parcel, transaction, report, label, and landmark tools.',
+            'The Field Appraisal and Assessment Sheet for land. The first page covers the data information, property details, owner, and location, and the form saves straight to the layer.',
+            'The Real Property Data Collection Sheet for residential properties. Its first part covers the reference numbers, the address, the land area and value, and the building details, and it also saves straight to the layer.',
+            "The Symbology page of the Layer Properties window. It is QGIS's own symbology editor, placed inside the suite's window.",
+            'The Display page, where you set the display name used in search and identify results, and the map tips that show when you hover over a feature.',
+            "The Attributes Form page, where you pick which fields appear in the form, arrange them, and set each field's alias, widget type, and constraints.",
+            "The Style menu in Layer Properties. From here a layer's style can be loaded or saved as iGML, our own style format, or saved as the default and restored to it.",
+            'The Labels page, where you choose the field or expression to show, then set the font, size, color, buffer, and placement.',
+          ],
+          documentation: docs('igeosys-lgu-suite'),
+          features: [
+            'A unified Forms Toolbar for the Field Appraisal and Assessment Sheet (FAAS) for Land, Building, and Machinery, and for the Data Collection Sheet (DCS), laid out like the official paper forms that field and local tax assessors use to record the value of a real property',
+            'Helpful form touches, like PIN auto-fill and highlights on the fields you have changed but not saved yet',
+            'A Tax Mapping System panel with the tools used in tax mapping: parcel search and info, consolidate, subdivide, resection and repin, technical descriptions, TMCR and matching reports, land legends, and label and landmark tools',
+            "A Layer Properties window with pages for General, Symbology, Labels, Display, Information, Attributes Form, CRS, and Identification, all in the suite's own look",
+            "Symbology and Attributes Form editors that come straight from QGIS, built right into the suite's own window",
+            'Labels and Display settings, like the label font, color, and placement, and the map tips that show when you hover over a feature',
+            "iGML, our own version of QML, so a layer's style can be loaded, saved, or set as the default from the Style menu",
+            'Digitizing toolbars that only enable the tools that fit the layer you are editing: point, line, or polygon',
+            'An installer that sets up the database side of the suite: PostgreSQL, PostGIS, and the municipal and provincial base maps',
+          ],
+          contributions: [
+            'Built the FAAS and DCS forms. These are the official forms that field assessors and local tax assessors use to record the details of a real property and calculate its value. The FAAS Land form, for example, runs across three pages, and its first page covers the data information, property details, owner, and location. The DCS, or Real Property Data Collection Sheet, comes in Residential and Commercial or Industrial versions and runs across four parts. Its first part covers the reference numbers, address, land area, land value, and building details.',
+            'Built the unified Forms Toolbar that replaced the old FAAS toolbar, with one dropdown for the FAAS forms and another for the DCS forms, each with keyboard shortcuts.',
+            'Made saving run in the background, so the app no longer freezes on big datasets, and added touches like PIN auto-fill, colored borders on edited fields, and a banner for unsaved changes.',
+            'Worked around the 10-character limit of shapefile field names by shortening the form fields, and wrote a one-time migration tool that rebuilds the columns and keeps a backup of the shapefile.',
+            "Built the Layer Properties window, bringing QGIS's own symbology and attributes form modules into the suite's window, and loading its pages gradually so it opens without freezing.",
+            'Helped build iGML, our own version of QML, with Load, Save, Save as Default, and Restore Default options in the Style menu.',
+            'Fixed bugs in the digitizing toolbars, and made the advanced toolbar disable the tools that do not fit the layer, depending on whether it is a point, line, or polygon layer.',
+            'Built the installer that sets up PostgreSQL, PostGIS, and the municipal and provincial base maps for the suite.',
+            'Updated the code to keep up with newer QGIS versions, like the changes in QGIS 3.40 and above.',
+          ],
+          challenges: [
+            {
+              challenge:
+                'Saving to PostGIS froze the whole interface when the dataset was big.',
+              learning:
+                "I learned how Qt's main thread works, and how to move heavy work like saving into background threads so the app stays responsive.",
+            },
+            {
+              challenge:
+                'Shapefiles limit field names to 10 characters, while the paper forms we mirrored have long, detailed fields.',
+              learning:
+                'I learned to plan around file format limits, shorten and map the field names carefully, and always back up the data before migrating it.',
+            },
+            {
+              challenge:
+                'Making the setup easy for non-technical users, when the app depends on a database that normally takes manual work to install and configure.',
+              learning:
+                'I learned how installers, database services, and automated setup scripts work, so the database side can be set up with much less manual work.',
+            },
+          ],
         },
       },
     ],

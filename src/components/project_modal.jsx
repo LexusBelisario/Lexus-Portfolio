@@ -671,7 +671,8 @@ export default function ProjectModal({ project, originRef, onClose }) {
     visit = null,
     advisers = [],
     features = [],
-    outcome = '',
+    contributions = [],
+    outcome,
     challenges = [],
   } = more
 
@@ -689,6 +690,7 @@ export default function ProjectModal({ project, originRef, onClose }) {
   const thumbsRef = useRef([])
 
   const images = gallery ? gallery.filter(Boolean) : []
+  const later = contributions.length ? 300 : 0
   const titleId = `project-modal-${id}`
   const isLive = period.endsWith('Present')
 
@@ -954,19 +956,41 @@ export default function ProjectModal({ project, originRef, onClose }) {
                   </ul>
                 </Section>
 
-                <Section title="Outcome" delay={1000} empty={!outcome}>
-                  <p className="pm-item" style={at(1200)}>
-                    {outcome}
-                  </p>
-                </Section>
+                {contributions.length ? (
+                  <Section title="My contributions" delay={1000}>
+                    <ul className="list-disc pl-5 marker:text-[#a9a2ff]">
+                      {contributions.map((item, index) => (
+                        <li
+                          key={item}
+                          className="pm-slide pl-1"
+                          style={at(1200 + index * 70)}
+                        >
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  </Section>
+                ) : null}
 
-                <Section title="Challenges and learnings" delay={1120} empty={!challenges.length}>
+                {outcome !== undefined ? (
+                  <Section title="Outcome" delay={1000 + later} empty={!outcome}>
+                    <p className="pm-item" style={at(1200 + later)}>
+                      {outcome}
+                    </p>
+                  </Section>
+                ) : null}
+
+                <Section
+                  title="Challenges and learnings"
+                  delay={1120 + later}
+                  empty={!challenges.length}
+                >
                   <ul className="flex flex-col gap-4">
                     {challenges.map((item, index) => (
                       <li
                         key={index}
                         className="pm-item flex flex-col gap-1 border-l-2 border-[#a9a2ff]/60 pl-4"
-                        style={at(1320 + index * 100)}
+                        style={at(1320 + later + index * 100)}
                       >
                         <p>
                           <span className="font-semibold text-white">Challenge: </span>
@@ -983,10 +1007,10 @@ export default function ProjectModal({ project, originRef, onClose }) {
               </div>
             </div>
 
-            <Section title="Tech stack used" delay={1250} empty={!stack.length}>
+            <Section title="Tech stack used" delay={1250 + later} empty={!stack.length}>
               <ul className="flex flex-wrap gap-3">
                 {stack.map((tech, index) => (
-                  <TechChip key={tech.label} tech={tech} delay={1450 + index * 70} />
+                  <TechChip key={tech.label} tech={tech} delay={1450 + later + index * 70} />
                 ))}
               </ul>
             </Section>
