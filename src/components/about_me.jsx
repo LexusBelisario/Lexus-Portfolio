@@ -28,7 +28,7 @@ const techStack = [
 ]
 
 const paragraphs = [
-  'I am a BS Computer Engineering Graduate (2025) at Rizal Technological University - Pasig Campus, currently working as a Full-Stack Software Developer for a year. I also have 2 years of experience in programming different kinds of software including hardware integration.',
+  'I am a BS Computer Engineering Graduate (2025) at Rizal Technological University - Pasig Campus, currently working as a Full-Stack Software Developer for a year. I also have 2 years of experience in programming/development, with different kinds of software and hardware integration.',
   'While I personally love Front-end development, and have a strong passion for improving website experiences, and bringing anything that you design to life, I am highly flexible, growth-oriented, and willing to learn and adapt to new programming languages, modern frameworks, tech stacks, and committed to continuously evolving alongside industry trends.',
 ]
 

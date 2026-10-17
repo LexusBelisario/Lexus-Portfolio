@@ -24,7 +24,22 @@ export const resume = {
   button: 'My Resume',
 }
 
-export const endLines = ['THE END', 'NOT QUITE THE END']
+export const endQuotes = [
+  { lines: ['THE END', 'NOT QUITE THE END'], effect: 'rise', caps: true },
+  { lines: ['Shocking...', 'Positively shocking'], effect: 'goldfinger' },
+  {
+    lines: ['He always did have an', 'inflated opinion of himself'],
+    effect: 'swell',
+  },
+  { lines: ['Bond.', 'James Bond.'], effect: 'typewriter' },
+  {
+    lines: ['Do you expect me to talk?', 'No, Mr. Bond, I expect you to die!'],
+    effect: 'laser',
+  },
+  { lines: ['A Martini,', 'Shaken not stirred'], effect: 'shaken' },
+]
+
+export const endQuoteInterval = 10000
 
 export const socialsHeading = 'My Socials:'
 

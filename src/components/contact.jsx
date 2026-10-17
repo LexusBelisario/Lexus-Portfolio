@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useInView } from '../hooks/scroll'
+import EndQuotes from './end_quotes'
 import {
   resume,
-  endLines,
+  endQuotes,
+  endQuoteInterval,
   socialsHeading,
   socials,
   builtWithHeading,
@@ -124,13 +126,7 @@ export default function Contact() {
       />
 
       <div className="relative z-10 flex flex-col items-center px-6 pt-[clamp(4rem,6.5vw,8rem)]">
-        <div className="flex flex-col items-center gap-[clamp(1.25rem,3.4vw,4rem)] text-center text-[clamp(1.75rem,2.6vw,3.25rem)] font-bold uppercase leading-none">
-          {endLines.map((line, index) => (
-            <p key={line} className="reveal" style={delay(index * 500)}>
-              {line}
-            </p>
-          ))}
-        </div>
+        <EndQuotes quotes={endQuotes} interval={endQuoteInterval} />
 
         <div className="mt-[clamp(3rem,7.5vw,9rem)] grid w-full max-w-[1100px] grid-cols-1 gap-12 text-center sm:grid-cols-2">
           <div
