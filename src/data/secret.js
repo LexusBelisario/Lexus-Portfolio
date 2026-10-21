@@ -77,35 +77,44 @@ export const movies = [
 export const bondIntro = 'Because I love the Bond Films, here are some of my favorite Bond films and Actors'
 
 export const bondActors = [
-  { name: 'Favorite Bond Actor 1', years: '0000 - 0000', note: 'Why you picked him' },
-  { name: 'Favorite Bond Actor 2', years: '0000 - 0000', note: 'Why you picked him' },
-  { name: 'Favorite Bond Actor 3', years: '0000 - 0000', note: 'Why you picked him' },
-  { name: 'Favorite Bond Actor 4', years: '0000 - 0000', note: 'Why you picked him' },
-  { name: 'Favorite Bond Actor 5', years: '0000 - 0000', note: 'Why you picked him' },
-  { name: 'Favorite Bond Actor 6', years: '0000 - 0000', note: 'Why you picked him' },
+  { name: 'Sean Connery', years: '1962 - 1971', file: 'connery', note: '' },
+  { name: 'Daniel Craig', years: '2006 - 2021', file: 'craig', note: '' },
+  { name: 'Roger Moore', years: '1973 - 1985', file: 'moore', note: '' },
+  { name: 'Timothy Dalton', years: '1987 - 1989', file: 'dalton', note: '' },
 ]
 
+export const endCard = 'Lexus will return.'
+
 export const bondFilms = [
-  { title: 'Favorite Bond Film 1', year: '0000', actor: 'Actor', note: 'Why it stuck with you' },
-  { title: 'Favorite Bond Film 2', year: '0000', actor: 'Actor', note: 'Why it stuck with you' },
-  { title: 'Favorite Bond Film 3', year: '0000', actor: 'Actor', note: 'Why it stuck with you' },
-  { title: 'Favorite Bond Film 4', year: '0000', actor: 'Actor', note: 'Why it stuck with you' },
-  { title: 'Favorite Bond Film 5', year: '0000', actor: 'Actor', note: 'Why it stuck with you' },
+  { title: 'From Russia with Love', year: '1963', actor: 'Sean Connery', note: '' },
+  { title: 'Dr. No', year: '1962', actor: 'Sean Connery', note: '' },
+  { title: 'Goldfinger', year: '1964', actor: 'Sean Connery', note: '' },
+  { title: 'Casino Royale', year: '2006', actor: 'Daniel Craig', note: '' },
+  { title: 'The Living Daylights', year: '1987', actor: 'Timothy Dalton', note: '' },
 ]
 
 export const hobbies = [
-  'Hobby one',
-  'Hobby two',
-  'Hobby three',
-  'Hobby four',
-  'Hobby five',
-  'Hobby six',
+  { title: 'Single-Player and Multiplayer Gaming' },
+  { title: 'Home Cooking and Learning New Recipes' },
+  { title: 'Listening to Dark Jazz and Old Music' },
+  { title: 'Physical Activities like Working Out, Playing Basketball, or Just Walking' },
+  { title: 'Watching Old and Classic Films, and Listening to Audiobooks' },
+  { title: 'Listening to Any News Stations', mention: true },
 ]
 
 export const passions = [
-  { title: 'Passion One', description: 'A short line about what drives you here.' },
-  { title: 'Passion Two', description: 'A short line about what drives you here.' },
-  { title: 'Passion Three', description: 'A short line about what drives you here.' },
+  {
+    title: 'Software Craftsmanship',
+    description: 'Building intuitive full-stack web applications, spatial GIS tools, and clean architectures.',
+  },
+  {
+    title: 'Continuous Learning',
+    description: 'Exploring computer engineering fundamentals, systems programming, and modern frameworks.',
+  },
+  {
+    title: 'Future Aspirations',
+    description: 'Working diligently as a software engineer with long-term ambition towards studying law.',
+  },
 ]
 
 export const gunbarrelTracks = [

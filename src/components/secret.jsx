@@ -11,6 +11,7 @@ import {
   hobbies,
   passions,
   gunbarrelTracks,
+  endCard,
 } from '../data/secret'
 import './secret.css'
 
@@ -56,6 +57,11 @@ const RETURN_SECONDS = 1
 const CHOREO_SECONDS =
   SWAY_SECONDS + DROP_SECONDS + DROP_PAUSE_SECONDS + RETURN_SECONDS
 const DOT_SCALE = 3.4
+const PHONE_QUERY = '(max-width: 767px) and (orientation: portrait)'
+const PHONE_DOT_SCALE = 4.5
+
+const dotScaleNow = () =>
+  window.matchMedia(PHONE_QUERY).matches ? PHONE_DOT_SCALE : DOT_SCALE
 const LOBES = [
   { x: 0.06, w: 0.04, a: 0.22 },
   { x: 0.17, w: 0.035, a: 0.34 },
@@ -363,8 +369,10 @@ function Blood() {
     let width = window.innerWidth
     let height = window.innerHeight
     let ratio = 1
+    let dotScale = dotScaleNow()
 
     const resize = () => {
+      dotScale = dotScaleNow()
       ratio = Math.min(window.devicePixelRatio || 1, 1.5)
       width = window.innerWidth
       height = window.innerHeight
@@ -384,8 +392,8 @@ function Blood() {
 
       if (shake > 0 && shake < 1) {
         const { x, y } = swayPath(shake * CHOREO_SECONDS, width, height)
-        const offsetX = (x / DOT_SCALE).toFixed(2)
-        const offsetY = (y / DOT_SCALE).toFixed(2)
+        const offsetX = (x / dotScale).toFixed(2)
+        const offsetY = (y / dotScale).toFixed(2)
         dot.style.transform = `translate(${offsetX}px, ${offsetY}px)`
       } else {
         dot.style.transform = ''
@@ -585,22 +593,381 @@ function Intro() {
   )
 }
 
+const STAMP_LABELS = ['TOP SECRET', 'RESTRICTED', 'MI6 DOSSIER']
+const STAMP_TILTS = [-6, 4, -3]
+
+function Stamp({ index, small = false, className = '' }) {
+  const slot = index % STAMP_LABELS.length
+
+  return (
+    <span
+      className={`stamp bond-type ${small ? 'stamp-sm' : ''} ${className}`}
+      style={{ '--tilt': `${STAMP_TILTS[slot]}deg` }}
+      aria-hidden="true"
+    >
+      {STAMP_LABELS[slot]}
+    </span>
+  )
+}
+
+const AGENT_STATUSES = [
+  'Licensed To Code',
+  'Licensed To Kill',
+  'Licensed To Vibe',
+  'Licensed To Ship',
+]
+const AGENT_CYCLE_MS = 2800
+
+function AgentBadge({ active }) {
+  const [step, setStep] = useState(0)
+
+  useEffect(() => {
+    if (!active) return undefined
+
+    const timer = setInterval(() => {
+      setStep((value) => (value + 1) % AGENT_STATUSES.length)
+    }, AGENT_CYCLE_MS)
+
+    return () => clearInterval(timer)
+  }, [active])
+
+  const status = AGENT_STATUSES[step]
+
+  return (
+    <div
+      className="agent-badge reveal bond-type relative w-fit border border-[#c9a45c] bg-[#121212]/80"
+      style={delay(0)}
+    >
+      <span className="agent-slot" aria-hidden="true" />
+      <div className="flex items-center justify-between gap-8 border-b border-[#c9a45c]/45 px-4 py-1.5 text-xs tracking-widest text-[#c9a45c]">
+        <span>MI6 DOSSIER NO. 007</span>
+        <span className="size-2 rounded-full bg-[#b81d1d] motion-safe:animate-pulse" aria-hidden="true" />
+      </div>
+      <div className="flex flex-col gap-1.5 px-4 py-3 text-sm tracking-widest sm:text-base">
+        <p className="font-bold text-[#e9e5db]">LEXUS / AGENT - 062123</p>
+        <p className="flex flex-wrap gap-x-2">
+          <span className="font-bold text-[#b81d1d]">STATUS:</span>
+          <span
+            key={`${active}-${status}`}
+            className="agent-status font-bold text-[#c9a45c]"
+            style={{ '--chars': status.length }}
+            aria-hidden="true"
+          >
+            {status}
+          </span>
+        </p>
+      </div>
+      <span className="sr-only">Status: {AGENT_STATUSES.join(', ')}</span>
+    </div>
+  )
+}
+
+const DOT_TONES = ['teal', 'yellow', 'green', 'magenta', 'orange']
+const ROW_TONES = ['wine', 'red', 'orange', 'yellow', 'sage', 'green', 'teal', 'magenta', 'wine']
+
+const MARGIN_SPOTS = [
+  { top: '11rem', kind: 'pair' },
+  { top: '22%', kind: 'cross' },
+  { top: '37%', kind: 'block' },
+  { top: '53%', kind: 'columns' },
+  { top: '69%', kind: 'cross' },
+  { top: '85%', kind: 'pair' },
+]
+
+function DotBlock({ cols, rows, tones, size = '0.65rem', pitch = '0.95rem', className = '' }) {
+  return (
+    <span
+      className={`dot-block ${className}`}
+      style={{ '--cols': cols, '--size': size, '--pitch': pitch }}
+      aria-hidden="true"
+    >
+      {Array.from({ length: cols * rows }, (_, index) => (
+        <span
+          key={index}
+          className="binder-dot"
+          style={{ '--i': index, background: `var(--bd-${tones[(index % cols) % tones.length]})` }}
+        />
+      ))}
+    </span>
+  )
+}
+
+function DotRow({ className = '' }) {
+  return (
+    <span className={`flex items-center gap-1.5 ${className}`} aria-hidden="true">
+      {ROW_TONES.map((tone, index) => (
+        <span
+          key={tone + index}
+          className="binder-pop size-3 rounded-full sm:size-3.5"
+          style={{ '--i': index, background: `var(--bd-${tone})` }}
+        />
+      ))}
+    </span>
+  )
+}
+
+function RankTile({ value, label, tone = 'red', className = '' }) {
+  return (
+    <span className={`rank-tile rank-tile-${tone} ${className}`} aria-hidden="true">
+      {label ?? pad(value)}
+    </span>
+  )
+}
+
+function MarginDots() {
+  return (
+    <div
+      className="pointer-events-none absolute inset-0 hidden xl:block"
+      style={{ '--ms': 'clamp(0.65rem, 0.95vw, 1.25rem)', '--mp': 'clamp(0.95rem, 1.4vw, 1.9rem)' }}
+      aria-hidden="true"
+    >
+      {MARGIN_SPOTS.map((spot) => (
+        <div key={spot.top} className="absolute left-5" style={{ top: spot.top }}>
+          {spot.kind === 'cross' ? (
+            <div className="relative h-[calc(var(--mp)*4+var(--ms))] w-[calc(var(--mp)*4+var(--ms))]">
+              <DotBlock
+                cols={1}
+                rows={5}
+                tones={['red']}
+                size="var(--ms)"
+                pitch="var(--mp)"
+                className="absolute left-[calc(var(--mp)*3)] top-0"
+              />
+              <DotBlock
+                cols={5}
+                rows={1}
+                tones={['wine', 'wine', 'wine', 'red', 'red']}
+                size="var(--ms)"
+                pitch="var(--mp)"
+                className="absolute left-0 top-[calc(var(--mp)*2)]"
+              />
+            </div>
+          ) : null}
+          {spot.kind === 'pair' ? (
+            <div className="relative h-[calc(var(--mp)*5)] w-[calc(var(--mp)*3)]">
+              <DotBlock cols={1} rows={2} tones={['magenta']} size="var(--ms)" pitch="var(--mp)" />
+              <DotBlock
+                cols={1}
+                rows={1}
+                tones={['green']}
+                size="var(--ms)"
+                pitch="var(--mp)"
+                className="absolute left-[calc(var(--mp)*2.3)] top-[calc(var(--mp)*0.5)]"
+              />
+              <DotBlock
+                cols={1}
+                rows={1}
+                tones={['yellow']}
+                size="var(--ms)"
+                pitch="var(--mp)"
+                className="absolute left-[calc(var(--mp)*1.2)] top-[calc(var(--mp)*3.6)]"
+              />
+            </div>
+          ) : null}
+          {spot.kind === 'block' ? (
+            <DotBlock cols={3} rows={4} tones={['teal']} size="var(--ms)" pitch="var(--mp)" />
+          ) : null}
+          {spot.kind === 'columns' ? (
+            <div className="flex items-start gap-[var(--mp)]">
+              <DotBlock cols={2} rows={7} tones={['teal', 'yellow']} size="var(--ms)" pitch="var(--mp)" />
+              <div className="flex flex-col items-center gap-[calc(var(--mp)*0.5)]">
+                <DotBlock cols={1} rows={5} tones={['green']} size="var(--ms)" pitch="var(--mp)" />
+                <span className="size-[calc(var(--ms)*1.6)] rounded-full bg-[var(--bd-red)]" />
+              </div>
+            </div>
+          ) : null}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+const TRAIL_FADE_SECONDS = 2.8
+const TRAIL_MIN_ROWS_PER_SECOND = 5
+const TRAIL_MAX_ROWS_PER_SECOND = 13
+const TRAIL_MOVING_THRESHOLD = 30
+const TRAIL_HOLD_MS = 160
+const TRAIL_PATTERNS = [
+  ['orange', 'orange', 'red', 'orange', 'orange', 'yellow', 'orange', 'sage'],
+  ['wine', 'red', 'wine', 'wine', 'green', 'red', 'wine', 'teal'],
+]
+const TRAIL_KEYFRAMES = [
+  { opacity: 1, transform: 'scale(1)' },
+  { opacity: 0.8, transform: 'scale(0.95)', offset: 0.2 },
+  { opacity: 0, transform: 'scale(0.6)' },
+]
+
+const clampRange = (value, low, high) => Math.min(high, Math.max(low, value))
+
+function ScrollTrail() {
+  const trailRef = useRef(null)
+  const [layout, setLayout] = useState({ cols: 1, rows: 0 })
+
+  useEffect(() => {
+    if (prefersReducedMotion()) return undefined
+
+    const node = trailRef.current
+    const host = node.closest('.secret-page') ?? document.documentElement
+    const wide = window.matchMedia('(min-width: 1280px)')
+    const animations = new Map()
+
+    let cols = 1
+    let rows = 0
+    let frame = 0
+    let running = false
+    let wasMoving = false
+    let last = 0
+    let lastEventY = window.scrollY
+    let lastScrollAt = -1000
+    let pending = 0
+    let velocity = 0
+    let dir = 1
+    let head = 0
+
+    const measure = () => {
+      const pitch = parseFloat(getComputedStyle(host).getPropertyValue('--rp')) || 14
+
+      cols = wide.matches ? 2 : 1
+      rows = Math.ceil(window.innerHeight / pitch) + 1
+      animations.forEach((animation) => animation.cancel())
+      animations.clear()
+      setLayout({ cols, rows })
+    }
+
+    const light = (row) => {
+      const wrapped = ((row % rows) + rows) % rows
+
+      for (let col = 0; col < cols; col += 1) {
+        const index = wrapped * cols + col
+        const dot = node.children[index]
+        if (!dot) continue
+
+        animations.get(index)?.cancel()
+        animations.set(
+          index,
+          dot.animate(TRAIL_KEYFRAMES, {
+            duration: TRAIL_FADE_SECONDS * 1000,
+            easing: 'linear',
+          }),
+        )
+      }
+    }
+
+    const step = (now) => {
+      const dt = Math.min(0.05, Math.max(0.001, (now - last) / 1000))
+      last = now
+
+      const instant = pending / dt
+      pending = 0
+      velocity += (instant - velocity) * (1 - Math.exp(-dt * 5))
+
+      const moving =
+        now - lastScrollAt < TRAIL_HOLD_MS && Math.abs(velocity) > TRAIL_MOVING_THRESHOLD
+
+      if (moving && rows > 0) {
+        const nextDir = velocity > 0 ? 1 : -1
+
+        if (!wasMoving || nextDir !== dir) {
+          dir = nextDir
+          head = dir > 0 ? 0 : rows - 1
+          light(Math.floor(head))
+        }
+
+        const speed = clampRange(
+          Math.abs(velocity) / 140,
+          TRAIL_MIN_ROWS_PER_SECOND,
+          TRAIL_MAX_ROWS_PER_SECOND,
+        )
+        let cursor = Math.floor(head)
+        head += dir * speed * dt
+        const target = Math.floor(head)
+
+        while (cursor !== target) {
+          cursor += dir
+          light(cursor)
+        }
+
+        head = ((head % rows) + rows) % rows
+      }
+
+      wasMoving = moving
+
+      if (moving) {
+        frame = requestAnimationFrame(step)
+      } else {
+        running = false
+        velocity = 0
+      }
+    }
+
+    const wake = () => {
+      if (running) return
+      running = true
+      last = performance.now()
+      frame = requestAnimationFrame(step)
+    }
+
+    const onScroll = () => {
+      const y = window.scrollY
+      pending += y - lastEventY
+      lastEventY = y
+      lastScrollAt = performance.now()
+      wake()
+    }
+
+    measure()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', measure)
+
+    return () => {
+      cancelAnimationFrame(frame)
+      animations.forEach((animation) => animation.cancel())
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', measure)
+    }
+  }, [])
+
+  return (
+    <div ref={trailRef} className="dot-trail" style={{ '--tcols': layout.cols }} aria-hidden="true">
+      {Array.from({ length: layout.rows * layout.cols }, (_, index) => {
+        const row = Math.floor(index / layout.cols)
+        const col = index % layout.cols
+        const pattern = TRAIL_PATTERNS[col % TRAIL_PATTERNS.length]
+
+        return (
+          <span
+            key={index}
+            className="trail-dot"
+            style={{ background: `var(--bd-${pattern[row % pattern.length]})` }}
+          />
+        )
+      })}
+    </div>
+  )
+}
+
 function FileSection({ index, title, children }) {
   const [ref, inView] = useInView(0.15)
 
   return (
     <section ref={ref} className={inView ? 'about-in' : ''}>
-      <div className="reveal flex items-baseline gap-4" style={delay(0)}>
-        <span className="shrink-0 whitespace-nowrap text-xs font-semibold tracking-[0.4em] text-[#f4ae52] sm:text-sm">
-          FILE {pad(index)}
+      <div className="reveal flex items-start gap-4 sm:items-center sm:gap-5" style={delay(0)}>
+        <span className="bond-type grid size-11 shrink-0 place-items-center rounded-full border border-[#c9a45c]/70 text-base tracking-widest text-[#c9a45c] sm:size-14 sm:text-lg">
+          {pad(index)}
         </span>
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h2>
+        <h2 className="text-2xl font-semibold leading-tight tracking-tight sm:text-4xl">{title}</h2>
+        <Stamp index={index - 1} className="ml-auto hidden shrink-0 md:inline-block" />
       </div>
 
-      <div
-        className="reveal-line mb-10 mt-4 h-px bg-[#fef3e2]/25"
-        style={{ ...delay(120), transformOrigin: 'left center' }}
-      />
+      <div className="relative mb-12 mt-6">
+        <div
+          className="reveal-line flex h-px bg-[#e9e5db]/20"
+          style={{ ...delay(120), transformOrigin: 'left center' }}
+        >
+          <span className="-mt-px h-[3px] w-16 bg-[#b81d1d]" />
+        </div>
+        <DotRow className="absolute right-0 top-1/2 -translate-y-1/2" />
+      </div>
 
       {children}
     </section>
@@ -645,6 +1012,22 @@ const MOVIE_IMAGES = Object.fromEntries(
 const movieImage = (movie) =>
   movie.image || MOVIE_IMAGES[slugify(movie.file ?? movie.title)] || ''
 
+const bondImageFiles = import.meta.glob('../assets/secrets/bonds/*.{png,jpg,jpeg,webp,avif}', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+})
+
+const BOND_IMAGES = Object.fromEntries(
+  Object.entries(bondImageFiles).map(([path, url]) => [
+    slugify(path.split('/').pop().replace(/\.[^.]+$/, '')),
+    url,
+  ]),
+)
+
+const bondImage = (actor) =>
+  actor.image || BOND_IMAGES[slugify(actor.file ?? actor.name)] || ''
+
 const GAMES_INTRO = [
   'I am such a huge gamer, and gaming has been a part of my life since my childhood up to now.',
   "Some games I finish in a weekend and never touch again. Others I keep going back to for years, and a few I still think about when I'm supposed to be working.",
@@ -655,7 +1038,7 @@ const GAMES_INTRO = [
 function Games() {
   return (
     <>
-      <div className="mb-10 flex max-w-3xl flex-col gap-4 border-l-2 border-[#d4621a] pl-6 text-lg leading-relaxed text-[#fef3e2]/75 sm:text-xl">
+      <div className="mb-10 flex max-w-3xl flex-col gap-4 border-l-2 border-[#b81d1d] pl-6 text-lg leading-relaxed text-[#e9e5db]/85 sm:text-xl">
         {GAMES_INTRO.map((paragraph, index) => (
           <p
             key={paragraph.slice(0, 24)}
@@ -717,7 +1100,7 @@ function Dream() {
     <div className="grid gap-14 lg:grid-cols-[1.1fr_1fr] lg:items-center lg:gap-16">
       <div className="relative">
         <div
-          className="reveal-pop pointer-events-none absolute -left-4 top-1/2 size-[min(70vw,24rem)] -translate-y-1/2 text-[#f4ae52]/10 sm:-left-10"
+          className="reveal-pop pointer-events-none absolute -left-4 top-1/2 size-[min(70vw,24rem)] -translate-y-1/2 text-[#c9a45c]/10 sm:-left-10"
           style={delay(600)}
           aria-hidden="true"
         >
@@ -726,7 +1109,7 @@ function Dream() {
 
         <div className="relative">
           <p
-            className="reveal text-sm tracking-[0.35em] text-[#fef3e2]/50"
+            className="reveal text-sm tracking-[0.35em] text-[#e9e5db]/85"
             style={delay(450)}
           >
             {dream.label.toUpperCase()}
@@ -752,7 +1135,7 @@ function Dream() {
           </h3>
           {dream.nameplate ? (
             <p
-              className="reveal mt-8 inline-flex rounded-md border border-[#f4ae52]/40 bg-linear-to-b from-[#f4ae52]/15 to-[#d4621a]/10 px-4 py-2 text-xs font-semibold tracking-[0.35em] text-[#f4ae52]"
+              className="reveal mt-8 inline-flex rounded-md border border-[#c9a45c]/40 bg-linear-to-b from-[#c9a45c]/15 to-[#b81d1d]/10 px-4 py-2 text-xs font-semibold tracking-[0.35em] text-[#c9a45c]"
               style={delay(roleEnd + 250)}
             >
               {dream.nameplate}
@@ -765,14 +1148,14 @@ function Dream() {
         {lead.map((paragraph, index) => (
           <p
             key={paragraph.slice(0, 24)}
-            className="reveal text-lg leading-relaxed text-[#fef3e2]/70 sm:text-xl"
+            className="reveal text-lg leading-relaxed text-[#e9e5db]/85 sm:text-xl"
             style={delay(900 + index * 150)}
           >
             {paragraph}
           </p>
         ))}
         <blockquote
-          className="reveal mt-2 border-l-2 border-[#d4621a] pl-6 text-xl font-medium leading-relaxed text-[#fef3e2] sm:text-2xl"
+          className="reveal mt-2 border-l-2 border-[#b81d1d] pl-6 text-xl font-medium leading-relaxed text-[#e9e5db] sm:text-2xl"
           style={delay(900 + lead.length * 150 + 150)}
         >
           {closing}
@@ -782,55 +1165,61 @@ function Dream() {
   )
 }
 
-function ShowcaseRow({ item, index, image }) {
+function ShowcaseRow({ item, index, image, imageClass = 'object-cover' }) {
   const [ref, inView] = useInView(0.15, '0px 0px -10% 0px', true)
   const hasBody = Boolean(item.quote || item.note)
 
   return (
     <li
       ref={ref}
-      className={`transition-all duration-1000 ease-out motion-reduce:translate-y-0 motion-reduce:opacity-100 motion-reduce:transition-none ${inView ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}
+      className={`transition-opacity duration-1000 ease-out motion-reduce:opacity-100 motion-reduce:transition-none ${inView ? 'opacity-100' : 'opacity-0'}`}
     >
       <article className="group grid grid-cols-2 gap-x-4 gap-y-6 sm:gap-x-6 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-0">
-        <div className="relative aspect-[2/3] overflow-hidden rounded-2xl border border-[#fef3e2]/10 bg-[#fef3e2]/4 transition-all duration-500 group-hover:-translate-y-1.5 group-hover:border-[#f4ae52]/60 group-hover:shadow-[0_22px_50px_-20px_rgba(212,98,26,0.55)] motion-reduce:transition-none lg:row-span-2">
-          {image ? (
-            <img
-              src={image}
-              alt={item.title}
-              loading="lazy"
-              className="size-full object-cover transition-transform duration-700 group-hover:scale-105 motion-reduce:transition-none"
-            />
-          ) : (
-            <span className="absolute bottom-5 left-6 text-5xl font-extrabold text-[#fef3e2]/15 transition-colors duration-300 group-hover:text-[#d4621a]">
-              {pad(index + 1)}
-            </span>
-          )}
+        <div className={`photo-wrap lg:row-span-2 dots-${DOT_TONES[index % DOT_TONES.length]}`}>
+          <span className="dot-ring" aria-hidden="true" />
+          <div className="dossier-photo relative aspect-[2/3] overflow-hidden bg-[#e9e5db]/5">
+            {image ? (
+              <img
+                src={image}
+                alt={item.title}
+                loading="lazy"
+                className={`develop size-full ${imageClass} group-hover:scale-105 ${inView ? 'developed' : ''}`}
+              />
+            ) : (
+              <span className="bond-type absolute bottom-5 left-6 text-5xl font-bold tracking-widest text-[#e9e5db]/15 transition-colors duration-300 group-hover:text-[#b81d1d]">
+                {pad(index + 1)}
+              </span>
+            )}
+            <Stamp index={index} small className="absolute right-4 top-4 z-[3]" />
+          </div>
         </div>
 
         <div className="flex flex-col justify-end gap-3 lg:col-span-2 lg:pb-6">
-          <span className="text-xs font-semibold tracking-[0.3em] text-[#f4ae52]">
-            {item.mention ? 'HONOURABLE MENTION' : pad(index + 1)}
-          </span>
-          <h3 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl lg:text-5xl">
+          {item.mention ? (
+            <span className="bond-type text-sm tracking-widest text-[#c9a45c]">Honourable mention</span>
+          ) : (
+            <RankTile value={index + 1} className="rank-tile-sm" />
+          )}
+          <h3 className="text-2xl font-semibold leading-tight tracking-tight sm:text-3xl lg:text-5xl">
             {item.title}
           </h3>
-          <span className="text-[#fef3e2]/45">{item.year}</span>
+          <span className="bond-type tracking-widest text-[#c9a45c]">{item.year}</span>
         </div>
 
         {hasBody ? (
           <div className="col-span-2 flex flex-col gap-5 lg:col-span-2 lg:pt-6">
             {item.quote ? (
-              <blockquote className="border-l-2 border-[#d4621a] pl-5 text-xl font-medium italic leading-relaxed sm:text-2xl">
+              <blockquote className="bond-type border-l-2 border-[#b81d1d] pl-4 text-base leading-relaxed tracking-wide text-[#e9e5db] sm:pl-5 sm:text-xl sm:tracking-wider">
                 &ldquo;{item.quote}&rdquo;
                 {item.quoteBy ? (
-                  <footer className="mt-2 text-sm not-italic tracking-wide text-[#fef3e2]/50">
+                  <footer className="mt-3 text-sm tracking-widest text-[#c9a45c]">
                     {item.quoteBy}
                   </footer>
                 ) : null}
               </blockquote>
             ) : null}
             {item.note ? (
-              <p className="text-lg leading-relaxed text-[#fef3e2]/70">{item.note}</p>
+              <p className="text-lg font-normal leading-relaxed text-[#e9e5db]/85">{item.note}</p>
             ) : null}
           </div>
         ) : null}
@@ -858,7 +1247,7 @@ function BondActors() {
   return (
     <>
       <p
-        className="reveal mb-8 border-l-2 border-[#d4621a] pl-6 text-lg leading-relaxed text-[#fef3e2]/75 sm:text-xl"
+        className="reveal mb-10 border-l-2 border-[#b81d1d] pl-6 text-lg font-normal leading-relaxed text-[#e9e5db]/85 sm:text-xl"
         style={delay(180)}
       >
         {bondIntro}
@@ -868,28 +1257,59 @@ function BondActors() {
   )
 }
 
+function ActorCard({ actor, index }) {
+  const [ref, inView] = useInView(0.15, '0px 0px -10% 0px', true)
+  const lead = index === 0
+  const image = bondImage(actor)
+
+  return (
+    <li
+      ref={ref}
+      className={`transition-opacity duration-1000 ease-out motion-reduce:opacity-100 motion-reduce:transition-none ${inView ? 'opacity-100' : 'opacity-0'}`}
+      style={{ transitionDelay: `${index * 140}ms` }}
+    >
+      <article className="group">
+        <div className={`photo-wrap dots-${DOT_TONES[index % DOT_TONES.length]}`}>
+          <span className="dot-ring" aria-hidden="true" />
+          <div className="dossier-photo relative aspect-[2/3] overflow-hidden bg-[#e9e5db]/5">
+            {image ? (
+              <img
+                src={image}
+                alt={actor.name}
+                loading="lazy"
+                className={`develop size-full object-cover object-top group-hover:scale-105 ${inView ? 'developed' : ''}`}
+              />
+            ) : null}
+            <div
+              className="absolute inset-x-0 bottom-0 h-1/2 bg-linear-to-t from-black/85 to-transparent"
+              aria-hidden="true"
+            />
+            <RankTile
+              value={index + 1}
+              tone={lead ? 'red' : 'brown'}
+              className="absolute bottom-5 left-5 z-[3]"
+            />
+            <Stamp index={index + 1} small className="absolute right-4 top-4 z-[3]" />
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-col gap-1">
+          <h3 className="text-xl font-semibold leading-tight sm:text-2xl">{actor.name}</h3>
+          <span className="bond-type text-sm tracking-widest text-[#c9a45c]">{actor.years}</span>
+          {actor.note ? (
+            <p className="mt-2 font-normal leading-relaxed text-[#e9e5db]/85">{actor.note}</p>
+          ) : null}
+        </div>
+      </article>
+    </li>
+  )
+}
+
 function BondActorsList() {
   return (
-    <ul className="flex flex-col">
+    <ul className="grid grid-cols-2 gap-x-4 gap-y-12 lg:grid-cols-[1.45fr_1fr_1fr_1fr] lg:items-end lg:gap-x-6">
       {bondActors.map((actor, index) => (
-        <li
-          key={actor.name + index}
-          className="reveal"
-          style={delay(220 + index * 90)}
-        >
-          <div className="group flex items-baseline gap-5 border-b border-[#fef3e2]/10 px-2 py-5 transition-colors duration-300 hover:bg-[#fef3e2]/5 sm:gap-8">
-            <span className="w-8 shrink-0 text-2xl font-bold text-[#f4ae52]/80">
-              {pad(index + 1)}
-            </span>
-            <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-6">
-              <h3 className="text-xl font-semibold transition-transform duration-300 group-hover:translate-x-1">
-                {actor.name}
-              </h3>
-              <span className="text-[#fef3e2]/45">{actor.years}</span>
-              <p className="text-[#fef3e2]/65 sm:ml-auto sm:text-right">{actor.note}</p>
-            </div>
-          </div>
-        </li>
+        <ActorCard key={actor.name + index} actor={actor} index={index} />
       ))}
     </ul>
   )
@@ -898,62 +1318,105 @@ function BondActorsList() {
 function BondFilms() {
   return (
     <ul className="flex flex-col">
+      <li className="film-cap flex justify-end gap-2 py-1.5 sm:gap-3" aria-hidden="true">
+        <span className="rank-tile rank-tile-red" />
+        <span className="rank-tile rank-tile-brown" />
+      </li>
       {bondFilms.map((film, index) => (
         <li
           key={film.title + index}
           className="reveal"
           style={delay(220 + index * 90)}
         >
-          <div className="group flex items-baseline gap-5 border-b border-[#fef3e2]/10 px-2 py-5 transition-colors duration-300 hover:bg-[#fef3e2]/5 sm:gap-8">
-            <span className="w-8 shrink-0 text-2xl font-bold text-[#f4ae52]/80">
-              {pad(index + 1)}
-            </span>
-            <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-6">
-              <h3 className="text-xl font-semibold transition-transform duration-300 group-hover:translate-x-1">
+          <div className="group flex items-center gap-3 py-1.5 sm:gap-6">
+            <div className="min-w-0 flex-1 sm:flex-none">
+              <h3 className="text-xl font-semibold leading-tight transition-colors duration-300 group-hover:text-[#c9a45c] sm:text-2xl">
                 {film.title}
+                <span className="bond-type ml-3 text-sm tracking-widest text-[#c9a45c]">{film.year}</span>
               </h3>
-              <span className="text-[#fef3e2]/45">{film.year}</span>
-              <span className="text-[#fef3e2]/45">{film.actor}</span>
-              <p className="text-[#fef3e2]/65 sm:ml-auto sm:text-right">{film.note}</p>
+              <p className="starring mt-1 sm:hidden">
+                starring <span className="uppercase">{film.actor}</span>
+              </p>
+              {film.note ? (
+                <p className="mt-1 font-normal text-[#e9e5db]/85">{film.note}</p>
+              ) : null}
             </div>
+            <span
+              className="hidden h-px min-w-6 flex-1 border-b border-dotted border-[#e9e5db]/35 sm:block"
+              aria-hidden="true"
+            />
+            <p className="starring hidden text-right sm:block">
+              starring <span className="uppercase">{film.actor}</span>
+            </p>
+            <span className="flex gap-2 sm:gap-3">
+              <RankTile value={index + 1} tone="red" />
+              <span className="rank-tile rank-tile-brown" aria-hidden="true" />
+            </span>
           </div>
         </li>
       ))}
+      <li className="film-cap flex justify-end gap-2 py-1.5 sm:gap-3" aria-hidden="true">
+        <span className="rank-tile rank-tile-brown" />
+        <span className="rank-tile rank-tile-brown" />
+      </li>
     </ul>
   )
 }
 
 function Hobbies() {
   return (
-    <ul className="flex flex-wrap gap-3">
+    <ol className="grid gap-4 lg:grid-cols-2">
       {hobbies.map((hobby, index) => (
         <li
-          key={hobby + index}
+          key={hobby.title + index}
           className="reveal"
-          style={delay(220 + index * 70)}
+          style={delay(220 + index * 80)}
         >
-          <span className="block cursor-default rounded-full border border-[#fef3e2]/25 px-6 py-2.5 text-lg transition-all duration-300 hover:-translate-y-1 hover:border-[#f4ae52] hover:bg-[#d4621a]/20">
-            {hobby}
-          </span>
+          <div className="group flex h-full items-center gap-4 border border-[#e9e5db]/25 px-4 py-3 transition-colors duration-300 hover:border-[#c9a45c] sm:gap-5">
+            <RankTile
+              value={index + 1}
+              label={hobby.mention ? 'HM' : undefined}
+              tone={hobby.mention ? 'brown' : 'red'}
+              className="rank-tile-sm"
+            />
+            <div className="flex min-w-0 flex-col gap-1">
+              {hobby.mention ? (
+                <span className="bond-type text-xs tracking-widest text-[#c9a45c]">Honourable mention</span>
+              ) : null}
+              <span className="text-lg font-medium leading-snug sm:text-xl">{hobby.title}</span>
+            </div>
+          </div>
         </li>
       ))}
-    </ul>
+    </ol>
   )
 }
 
+const PASSION_DOTS = [
+  { cols: 3, rows: 4, tones: ['teal'] },
+  { cols: 2, rows: 6, tones: ['teal', 'yellow'] },
+  { cols: 1, rows: 6, tones: ['green'] },
+]
+
 function Passions() {
   return (
-    <div className="grid gap-5 md:grid-cols-3">
+    <div className="grid divide-y divide-[#e9e5db]/15 md:grid-cols-3 md:divide-x md:divide-y-0">
       {passions.map((passion, index) => (
         <div
           key={passion.title + index}
-          className="reveal"
+          className="reveal py-8 first:pt-0 md:px-8 md:py-0 md:first:pl-0 md:last:pr-0"
           style={delay(220 + index * 120)}
         >
-          <article className="h-full rounded-2xl border border-[#fef3e2]/10 bg-linear-to-b from-[#fef3e2]/6 to-transparent p-7 transition-all duration-300 hover:-translate-y-1.5 hover:border-[#f4ae52]/60">
-            <div className="mb-5 h-0.5 w-10 bg-[#d4621a]" />
-            <h3 className="text-2xl font-bold">{passion.title}</h3>
-            <p className="mt-3 text-[#fef3e2]/65">{passion.description}</p>
+          <article className="group relative h-full md:pr-14">
+            <DotBlock
+              {...PASSION_DOTS[index % PASSION_DOTS.length]}
+              size="0.55rem"
+              pitch="0.9rem"
+              className="absolute right-0 top-0 opacity-70 transition-opacity duration-500 group-hover:opacity-100"
+            />
+            <div className="mb-5 h-[3px] w-10 bg-[#b81d1d] transition-all duration-500 group-hover:w-20 group-hover:bg-[#c9a45c]" />
+            <h3 className="text-2xl font-semibold">{passion.title}</h3>
+            <p className="mt-3 font-normal text-[#e9e5db]/85">{passion.description}</p>
           </article>
         </div>
       ))}
@@ -961,70 +1424,165 @@ function Passions() {
   )
 }
 
-function Record() {
+function Rifling() {
+  const view = 300
+
   return (
     <div
-      className="reveal-pop relative mx-auto aspect-square w-[min(78vw,30rem)] shrink-0 lg:mx-0 lg:w-[min(42vw,36rem)] lg:translate-x-[12%]"
+      className="reveal-pop relative mx-auto aspect-square w-[min(78vw,30rem)] shrink-0 rounded-full shadow-[0_0_110px_18px_rgba(201,164,92,0.2),0_0_36px_2px_rgba(201,164,92,0.14)] lg:mx-0 lg:w-[min(42vw,36rem)]"
       style={delay(500)}
       aria-hidden="true"
     >
-      <div className="relative size-full rounded-full bg-[image:repeating-radial-gradient(circle_at_center,#150d07_0,#150d07_2px,#22160c_2px,#22160c_4px)] shadow-[0_2vw_5vw_rgba(0,0,0,0.55)] ring-1 ring-[#fef3e2]/10 motion-safe:animate-[spin_36s_linear_infinite]">
-        <span className="absolute inset-0 rounded-full bg-[image:conic-gradient(from_0deg,transparent_0deg,rgba(254,243,226,0.16)_38deg,transparent_86deg,transparent_180deg,rgba(254,243,226,0.1)_218deg,transparent_266deg)]" />
-        <span className="absolute inset-[7%] rounded-full ring-1 ring-[#fef3e2]/5" />
-        <span className="absolute inset-[18%] rounded-full ring-1 ring-[#fef3e2]/5" />
-        <div className="absolute inset-[33%] flex items-center justify-center rounded-full bg-[image:linear-gradient(135deg,#f4ae52,#d4621a)] p-[6%] shadow-[inset_0_0_0_2px_rgba(42,26,14,0.25)]">
-          <span className="text-center text-[clamp(0.5rem,1.1vw,0.95rem)] font-bold leading-snug tracking-[0.3em] text-[#2a1a0e]">
-            {profile.eyebrow}
-          </span>
-        </div>
-        <span className="absolute inset-[48.5%] rounded-full bg-[#2a1a0e]" />
-      </div>
+      <svg
+        viewBox={`${-view} ${-view} ${view * 2} ${view * 2}`}
+        className="size-full motion-safe:animate-[spin_160s_linear_infinite]"
+      >
+        <defs>
+          <linearGradient id="rifling-land" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#8a8379" />
+            <stop offset="0.5" stopColor="#3f3b36" />
+            <stop offset="1" stopColor="#12100e" />
+          </linearGradient>
+          <radialGradient id="rifling-depth">
+            <stop offset="0.16" stopColor="#000" stopOpacity="1" />
+            <stop offset="0.7" stopColor="#000" stopOpacity="0.15" />
+            <stop offset="1" stopColor="#000" stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id="rifling-core">
+            <stop offset="0" stopColor="#c9a45c" stopOpacity="0.55" />
+            <stop offset="0.6" stopColor="#6b4a1c" stopOpacity="0.35" />
+            <stop offset="1" stopColor="#000" stopOpacity="1" />
+          </radialGradient>
+          <filter id="rifling-glow" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <clipPath id="rifling-clip">
+            <circle r={view - 2} />
+          </clipPath>
+        </defs>
+
+        <g clipPath="url(#rifling-clip)">
+          <circle r={view} fill="#080605" />
+          {BARREL_GEOMETRY.map((land, index) => (
+            <g key={index}>
+              <path d={land.outline} fill="url(#rifling-land)" stroke="#000" strokeWidth="1.5" />
+              <path d={land.trail} fill="none" stroke="#e9e5db" strokeOpacity="0.4" strokeWidth="1.2" />
+            </g>
+          ))}
+          <circle r={view} fill="url(#rifling-depth)" />
+        </g>
+
+        <circle
+          r={view - 2}
+          fill="none"
+          stroke="#c9a45c"
+          strokeOpacity="0.7"
+          strokeWidth="1.5"
+          filter="url(#rifling-glow)"
+        />
+        <circle r="52" fill="url(#rifling-core)" stroke="#c9a45c" strokeWidth="2.5" filter="url(#rifling-glow)" />
+      </svg>
+
+      <span className="bond-type absolute -bottom-3 left-0 -rotate-6 border-2 border-[#b81d1d] bg-[#121212]/80 px-4 py-1.5 text-xl font-bold tracking-widest text-[#b81d1d] sm:text-2xl lg:-left-8">
+        EYES ONLY
+      </span>
     </div>
+  )
+}
+
+function Flourish() {
+  return (
+    <div className="flex w-full items-center gap-4" aria-hidden="true">
+      <span className="h-px flex-1 bg-linear-to-r from-transparent to-[#b81d1d]" />
+      <span className="size-2.5 rotate-45 bg-[#b81d1d]" />
+      <span className="size-2 rotate-45 border border-[#b81d1d]" />
+      <span className="size-2.5 rotate-45 bg-[#b81d1d]" />
+      <span className="h-px flex-1 bg-linear-to-l from-transparent to-[#b81d1d]" />
+    </div>
+  )
+}
+
+function EndCard({ onReplay }) {
+  const [ref, inView] = useInView(0.3)
+
+  return (
+    <footer
+      ref={ref}
+      className={`flex flex-col items-center gap-14 pb-8 pt-24 text-center ${inView ? 'about-in' : ''}`}
+    >
+      <div className="reveal flex w-full max-w-4xl flex-col items-center gap-9" style={delay(0)}>
+        <Flourish />
+        <p className="end-title text-4xl font-medium uppercase tracking-[0.16em] text-[#c9a45c] sm:text-6xl lg:text-7xl">
+          {endCard}
+        </p>
+        <Flourish />
+      </div>
+      <div className="reveal flex flex-wrap justify-center gap-4" style={delay(350)}>
+        <a
+          href="/"
+          className="border border-[#e9e5db]/40 px-6 py-2.5 text-sm tracking-widest transition-colors hover:bg-[#e9e5db] hover:text-[#121212]"
+        >
+          BACK TO PORTFOLIO
+        </a>
+        <button
+          type="button"
+          onClick={onReplay}
+          className="cursor-pointer border border-[#b81d1d] px-6 py-2.5 text-sm tracking-widest text-[#c9a45c] transition-colors hover:bg-[#b81d1d] hover:text-[#e9e5db]"
+        >
+          REPLAY INTRO
+        </button>
+      </div>
+    </footer>
   )
 }
 
 function Dossier({ armed, onReplay }) {
   return (
-    <div className="secret-content relative overflow-hidden bg-[#2a1a0e] text-[#fef3e2]">
-      <div className="pointer-events-none absolute inset-0 bg-[image:radial-gradient(ellipse_60%_24%_at_50%_0%,rgba(212,98,26,0.34),transparent_70%),radial-gradient(ellipse_45%_18%_at_0%_45%,rgba(244,174,82,0.12),transparent_70%),radial-gradient(ellipse_45%_18%_at_100%_75%,rgba(212,98,26,0.2),transparent_70%)]" aria-hidden="true" />
+    <div className="secret-content cold-war relative overflow-hidden text-[#e9e5db]">
+      <MarginDots />
 
-      <main className="relative mx-auto flex w-full max-w-6xl flex-col gap-24 px-6 pb-24 sm:px-10 lg:gap-32">
+      <main className="relative mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 pb-20 sm:gap-24 sm:px-10 sm:pb-24 lg:gap-32">
         <header
-          className={`relative flex min-h-[90vh] flex-col justify-center gap-12 pt-24 lg:flex-row lg:items-center lg:justify-between lg:gap-8 ${armed ? 'about-in' : ''}`}
+          className={`relative flex min-h-[90svh] flex-col justify-center gap-10 pt-20 sm:gap-12 sm:pt-24 lg:flex-row lg:items-center lg:justify-between lg:gap-8 ${armed ? 'about-in' : ''}`}
         >
           <div className="relative z-10 flex max-w-xl flex-col gap-6">
+            <AgentBadge active={armed} />
             <p
-              className="reveal flex items-center gap-4 text-sm font-semibold tracking-[0.5em] text-[#f4ae52]"
-              style={delay(0)}
+              className="reveal bond-type flex items-center gap-4 text-lg tracking-widest text-[#c9a45c] sm:text-xl"
+              style={delay(100)}
             >
-              <span className="h-px w-10 bg-[#f4ae52]" aria-hidden="true" />
+              <span className="h-px w-10 bg-[#c9a45c]" aria-hidden="true" />
               {profile.eyebrow}
             </p>
             <h1
-              className="reveal font-display text-6xl leading-[0.95] tracking-wide sm:text-8xl"
-              style={delay(150)}
+              className="reveal text-6xl font-extrabold leading-[0.92] tracking-tight sm:text-8xl"
+              style={delay(200)}
             >
               {profile.title}
             </h1>
             <p
-              className="reveal text-lg leading-relaxed text-[#fef3e2]/75 sm:text-xl"
-              style={delay(300)}
+              className="reveal border-l-2 border-[#b81d1d] pl-6 text-lg font-normal leading-relaxed text-[#e9e5db]/85 sm:text-xl"
+              style={delay(320)}
             >
               {profile.intro}
             </p>
             <div
-              className="reveal mt-4 flex items-center gap-4 text-xs tracking-[0.5em] text-[#fef3e2]/50"
+              className="reveal bond-type mt-4 flex items-center gap-4 text-sm tracking-widest text-[#e9e5db]/85"
               style={delay(650)}
             >
               <span
-                className="h-12 w-px bg-linear-to-b from-[#f4ae52] to-transparent motion-safe:animate-pulse"
+                className="h-12 w-px bg-linear-to-b from-[#c9a45c] to-transparent motion-safe:animate-pulse"
                 aria-hidden="true"
               />
-              SCROLL DOWN FOR MORE
+              Scroll down for more
             </div>
           </div>
 
-          <Record />
+          <Rifling />
         </header>
 
         <FileSection index={1} title="Favorite Games of All Time">
@@ -1055,42 +1613,51 @@ function Dossier({ armed, onReplay }) {
           <Passions />
         </FileSection>
 
-        <footer className="flex flex-wrap justify-center gap-4 pt-8">
-          <a
-            href="/"
-            className="rounded-full border border-[#fef3e2]/30 px-6 py-2.5 text-sm tracking-widest transition-colors hover:bg-[#fef3e2] hover:text-[#2a1a0e]"
-          >
-            BACK TO PORTFOLIO
-          </a>
-          <button
-            type="button"
-            onClick={onReplay}
-            className="cursor-pointer rounded-full border border-[#d4621a]/60 px-6 py-2.5 text-sm tracking-widest text-[#f4ae52] transition-colors hover:bg-[#d4621a] hover:text-[#fef3e2]"
-          >
-            REPLAY INTRO
-          </button>
-        </footer>
+        <EndCard onReplay={onReplay} />
       </main>
+
+      <div className="film-grain pointer-events-none absolute inset-0 z-10" aria-hidden="true" />
+      <div className="cold-vignette" aria-hidden="true" />
+
+      <ScrollTrail />
     </div>
   )
 }
 
 function Gate({ onStart }) {
+  const touch = window.matchMedia('(pointer: coarse)').matches
+
   useEffect(() => {
-    window.addEventListener('pointerdown', onStart, { once: true })
-    window.addEventListener('keydown', onStart, { once: true })
+    let fired = false
+
+    const go = () => {
+      if (fired) return
+      fired = true
+      onStart()
+    }
+
+    window.addEventListener('pointerdown', go)
+    window.addEventListener('pointerup', go)
+    window.addEventListener('keydown', go)
 
     return () => {
-      window.removeEventListener('pointerdown', onStart)
-      window.removeEventListener('keydown', onStart)
+      window.removeEventListener('pointerdown', go)
+      window.removeEventListener('pointerup', go)
+      window.removeEventListener('keydown', go)
     }
   }, [onStart])
 
   return (
-    <div className="fixed inset-0 z-70 flex items-center justify-center bg-black px-6 text-center">
-      <p className="text-sm tracking-[0.5em] text-white/60">
-        CLICK OR PRESS ANY KEY TO START
-      </p>
+    <div className="fixed inset-0 z-70 flex flex-col items-center justify-center gap-10 bg-black px-6 text-center">
+      <span className="gate-dot" aria-hidden="true" />
+      <div className="flex flex-col gap-3">
+        <p className="text-sm tracking-[0.35em] text-white/80 sm:tracking-[0.5em]">
+          {touch ? 'TAP ANYWHERE TO START' : 'CLICK OR PRESS ANY KEY TO START'}
+        </p>
+        <p className="bond-type text-xs tracking-widest text-white/50">
+          Sound on for the full experience
+        </p>
+      </div>
     </div>
   )
 }
@@ -1103,12 +1670,21 @@ export default function Secret() {
   const [track, setTrack] = useState(null)
   const [armed, setArmed] = useState(() => prefersReducedMotion())
   const [run, setRun] = useState(0)
+  const [dotScale, setDotScale] = useState(dotScaleNow)
   const [muted, setMuted] = useState(false)
   const [audioActive, setAudioActive] = useState(false)
   const audioRef = useRef(null)
   const mutedRef = useRef(false)
   const keepAudioRef = useRef(false)
+  const unlockedRef = useRef(false)
   const shotRef = useRef(null)
+
+  useEffect(() => {
+    const sync = () => setDotScale(dotScaleNow())
+
+    window.addEventListener('resize', sync)
+    return () => window.removeEventListener('resize', sync)
+  }, [])
 
   useEffect(() => {
     mutedRef.current = muted
@@ -1172,7 +1748,7 @@ export default function Secret() {
         })
         .catch((error) => {
           if (cancelled) return
-          if (error.name === 'NotAllowedError') setPhase('gate')
+          if (error.name === 'NotAllowedError' && !unlockedRef.current) setPhase('gate')
           else setStarted(true)
         })
     }
@@ -1254,11 +1830,13 @@ export default function Secret() {
   }, [phase, started, run, finish, skip, track])
 
   const start = useCallback(() => {
+    unlockedRef.current = true
     setRun((count) => count + 1)
     setPhase('intro')
   }, [])
 
   const replay = () => {
+    unlockedRef.current = true
     window.scrollTo({ top: 0, behavior: 'instant' })
     setArmed(false)
     setRun((count) => count + 1)
@@ -1273,7 +1851,7 @@ export default function Secret() {
     '--sway-delay': `${SWAY_DELAY_SECONDS}s`,
     '--blood-out-delay': `${BLOOD_OUT_DELAY_SECONDS}s`,
     '--blood-fade': `${BLOOD_FADE_SECONDS}s`,
-    '--open': DOT_SCALE,
+    '--open': dotScale,
     '--end-x': BARREL_IMAGE ? `${BARREL_IMAGE_FOCUS_X * 100}vw` : '50vw',
     '--end-pct': BARREL_IMAGE ? `${BARREL_IMAGE_FOCUS_X * 100}%` : '50%',
     '--t0': track?.hit
@@ -1282,7 +1860,7 @@ export default function Secret() {
   }
 
   return (
-    <div className="secret-page min-h-screen bg-[#2a1a0e]" style={timeline}>
+    <div className="secret-page min-h-[100svh] bg-[#000000]" style={timeline}>
       <div className={playing ? 'secret-iris' : ''}>
         <Dossier armed={armed} onReplay={replay} />
       </div>
@@ -1297,7 +1875,7 @@ export default function Secret() {
           <button
             type="button"
             onClick={skip}
-            className="fixed bottom-6 right-6 z-70 cursor-pointer text-sm tracking-[0.3em] text-white/50 transition-colors hover:text-white"
+            className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] right-2 z-70 cursor-pointer px-4 py-3 text-sm tracking-[0.3em] text-white/70 transition-colors hover:text-white sm:bottom-4 sm:right-5"
           >
             SKIP
           </button>
@@ -1308,7 +1886,7 @@ export default function Secret() {
         <button
           type="button"
           onClick={() => setMuted((value) => !value)}
-          className="fixed bottom-6 left-6 z-70 cursor-pointer text-sm tracking-[0.3em] text-white/50 transition-colors hover:text-white"
+          className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-2 z-70 cursor-pointer px-4 py-3 text-sm tracking-[0.3em] text-white/70 transition-colors hover:text-white sm:bottom-4 sm:left-5"
         >
           {muted ? 'SOUND OFF' : 'SOUND ON'}
         </button>
